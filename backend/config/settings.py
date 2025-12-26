@@ -39,8 +39,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # third-party apps
     'rest_framework',
+    'rest_framework_simplejwt',
     'corsheaders',
     # local apps
+    'apps.accounts',
 ]
 
 MIDDLEWARE = [
@@ -121,6 +123,8 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+AUTH_USER_MODEL = 'accounts.User'
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:3000",
@@ -130,6 +134,14 @@ CORS_ALLOW_CREDENTIALS = True
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'base.authentication.CookiesJWTAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
 }
+
+AUTH_COOKIE = "access_token"
+AUTH_COOKIE_ACCESS_MAX_AGE = 60 * 5
+AUTH_COOKIE_REFRESH_MAX_AGE = 60 * 60 * 24
+AUTH_COOKIE_SECURE = True  #SSL Connection
+AUTH_COOKIE_HTTP_ONLY = True #Flag: So that javascript cannot access the values in the browser
+AUTH_COOKIE_PATH = '/'
+AUTH_COOKIE_SAMESITE = 'None'
