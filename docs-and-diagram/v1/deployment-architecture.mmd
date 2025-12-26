@@ -1,0 +1,74 @@
+graph TB
+    subgraph "Client Layer"
+        Web[Web Browser<br/>React/Vue]
+        Mobile[Mobile App<br/>React Native<br/>Phase 1B]
+    end
+    
+    subgraph "Load Balancer"
+        LB[Nginx/Traefik]
+    end
+    
+    subgraph "Application Layer"
+        Django1[Django Server 1<br/>Gunicorn]
+        Django2[Django Server 2<br/>Gunicorn]
+        DjangoN[Django Server N<br/>Gunicorn]
+    end
+    
+    subgraph "WebSocket Layer"
+        Daphne1[Daphne 1<br/>ASGI Server]
+        Daphne2[Daphne 2<br/>ASGI Server]
+    end
+    
+    subgraph "Cache & Message Broker"
+        Redis[(Redis<br/>Channel Layer<br/>& Cache)]
+    end
+    
+    subgraph "Database Layer"
+        PG[(PostgreSQL<br/>Primary)]
+        PGReplica[(PostgreSQL<br/>Read Replica)]
+    end
+    
+    subgraph "Storage"
+        S3[S3/MinIO<br/>Static Files<br/>User Uploads]
+    end
+    
+    subgraph "Monitoring"
+        Sentry[Sentry<br/>Error Tracking]
+        Metrics[Prometheus<br/>Metrics]
+    end
+    
+    Web --> LB
+    Mobile --> LB
+    
+    LB -->|HTTP API| Django1
+    LB -->|HTTP API| Django2
+    LB -->|HTTP API| DjangoN
+    LB -->|WebSocket| Daphne1
+    LB -->|WebSocket| Daphne2
+    
+    Django1 --> Redis
+    Django2 --> Redis
+    DjangoN --> Redis
+    Daphne1 --> Redis
+    Daphne2 --> Redis
+    
+    Django1 --> PG
+    Django2 --> PG
+    DjangoN --> PG
+    Django1 -.->|Read| PGReplica
+    Django2 -.->|Read| PGReplica
+    
+    Django1 --> S3
+    Django2 --> S3
+    
+    Django1 --> Sentry
+    Django2 --> Sentry
+    Django1 --> Metrics
+    Django2 --> Metrics
+    
+    style Web fill:#e1f5ff
+    style Mobile fill:#e1f5ff
+    style LB fill:#fff4e1
+    style Redis fill:#ffe1e1
+    style PG fill:#e1ffe1
+    style PGReplica fill:#e1ffe1

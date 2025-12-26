@@ -1,0 +1,64 @@
+graph TD
+    Start([User Opens App]) --> Auth{Authenticated?}
+    
+    Auth -->|No| Login[Login/Register]
+    Login --> Dashboard
+    
+    Auth -->|Yes| Dashboard[Dashboard View]
+    
+    Dashboard --> Action{Choose Action}
+    
+    Action -->|Create| CreateTask[Create New Task]
+    CreateTask --> SetDetails[Set Title, Description, Project]
+    SetDetails --> EstPomodoro{Set Estimate?}
+    EstPomodoro -->|Yes| SetEst[Input Estimated Pomodoros]
+    EstPomodoro -->|No| SaveTask
+    SetEst --> SaveTask[Save Task]
+    SaveTask --> Dashboard
+    
+    Action -->|Start| SelectTask[Select Task to Start]
+    SelectTask --> StartTask[Click Start]
+    StartTask --> StartPomodoro[Create Pomodoro Session]
+    StartPomodoro --> ShowTimer[Show Floating Timer]
+    ShowTimer --> TimerRunning{Timer Status}
+    
+    TimerRunning -->|Running| WaitComplete{25 min elapsed?}
+    WaitComplete -->|No| UserAction{User Action?}
+    UserAction -->|Pause| PauseTask[Pause Task]
+    PauseTask --> Dashboard
+    UserAction -->|Continue| TimerRunning
+    
+    WaitComplete -->|Yes| Notify[Play Completion Sound]
+    Notify --> BreakChoice{Take Break?}
+    BreakChoice -->|Yes| StartBreak[Start Break Timer]
+    StartBreak --> BreakComplete{Break Done?}
+    BreakComplete -->|Yes| ContinueWork{Continue Task?}
+    ContinueWork -->|Yes| StartPomodoro
+    ContinueWork -->|No| CompleteTask
+    
+    BreakChoice -->|No| CompleteTask[Mark Task Complete]
+    TimerRunning -->|Force End| CompleteTask
+    
+    CompleteTask --> SaveComplete[Save Completion Data]
+    SaveComplete --> Dashboard
+    
+    Action -->|View Analytics| Analytics[View Reports]
+    Analytics --> AnalyticsType{Report Type}
+    AnalyticsType -->|Daily| DailyReport[Today's Summary]
+    AnalyticsType -->|Weekly| WeeklyReport[Weekly Chart]
+    AnalyticsType -->|Monthly| MonthlyReport[Monthly Stats]
+    DailyReport --> Dashboard
+    WeeklyReport --> Dashboard
+    MonthlyReport --> Dashboard
+    
+    Action -->|Manage Projects| Projects[Projects Page]
+    Projects --> ProjectAction{Action}
+    ProjectAction -->|Create| CreateProject[Create New Project]
+    ProjectAction -->|Edit| EditProject[Edit Project]
+    ProjectAction -->|Delete| DeleteProject[Delete Project]
+    CreateProject --> Dashboard
+    EditProject --> Dashboard
+    DeleteProject --> Dashboard
+    
+    Action -->|Logout| Logout[Logout]
+    Logout --> End([Exit])

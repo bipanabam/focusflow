@@ -1,0 +1,101 @@
+classDiagram
+    class User {
+        +int id
+        +string email
+        +string username
+        +string password_hash
+        +string user_type
+        +int organization_id
+        +string timezone
+        +json pomodoro_settings
+        +datetime created_at
+        +create()
+        +authenticate()
+        +update_profile()
+        +get_tasks()
+        +get_analytics()
+    }
+    
+    class Project {
+        +int id
+        +string name
+        +string description
+        +string color_code
+        +int owner_id
+        +boolean is_active
+        +create()
+        +update()
+        +delete()
+        +get_tasks()
+        +calculate_total_time()
+    }
+    
+    class Task {
+        +int id
+        +string title
+        +text description
+        +int owner_id
+        +int project_id
+        +int estimated_pomodoros
+        +string status
+        +datetime started_at
+        +datetime ended_at
+        +create()
+        +start()
+        +pause()
+        +resume()
+        +complete()
+        +calculate_focus_time()
+        +get_pomodoro_sessions()
+    }
+    
+    class PomodoroSession {
+        +int id
+        +int task_id
+        +int user_id
+        +datetime started_at
+        +datetime ended_at
+        +int duration_minutes
+        +boolean is_break
+        +boolean completed
+        +start()
+        +complete()
+        +calculate_actual_duration()
+    }
+    
+    class TaskService {
+        +create_task(user, data)
+        +start_task(task_id, user)
+        +pause_task(task_id, user)
+        +resume_task(task_id, user)
+        +complete_task(task_id, user)
+        +get_user_tasks(user, filters)
+    }
+    
+    class PomodoroService {
+        +start_session(task, user)
+        +complete_session(session_id)
+        +start_break(user, break_type)
+        +get_active_session(user)
+        +calculate_statistics(user, date_range)
+    }
+    
+    class AnalyticsService {
+        +get_daily_summary(user, date)
+        +get_weekly_report(user, week)
+        +get_monthly_report(user, month)
+        +calculate_focus_streaks(user)
+        +get_project_breakdown(user, project_id)
+    }
+    
+    User "1" --> "*" Task : creates
+    User "1" --> "*" Project : owns
+    User "1" --> "*" PomodoroSession : performs
+    Task "1" --> "*" PomodoroSession : contains
+    Task "*" --> "1" Project : belongs_to
+    
+    TaskService --> Task : manages
+    TaskService --> PomodoroService : uses
+    PomodoroService --> PomodoroSession : manages
+    AnalyticsService --> Task : analyzes
+    AnalyticsService --> PomodoroSession : analyzes
