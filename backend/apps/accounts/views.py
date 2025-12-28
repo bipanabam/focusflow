@@ -3,6 +3,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated   
 from rest_framework.response import Response
+from rest_framework import status
 from apps.accounts.models import User
 
 from apps.accounts.serializers import UserSerializer
@@ -11,90 +12,87 @@ from rest_framework import generics
 # Create your views here.
 class UserCreateView(generics.CreateAPIView):
     serializer_class = UserSerializer
-    
+
 class CustomTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         try:
-            response = super().post(request, *args, **kwargs)
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
 
-            if response.status_code == 200:
-                access_token = response.data.get('access')
-                refresh_token = response.data.get('refresh')
-                email = request.data.get('email')
+            user = serializer.user
+            tokens = serializer.validated_data
 
-                try:
-                    user = User.objects.get(email=email)
-                except User.DoesNotExist:
-                    return Response({'error':'email or password is incorrect.'}, status=401)
-                
-                res = Response()
-                res.data = {"success":True,
-                            "user": {
-                                "email":user.email,
-                                "first_name": user.first_name,
-                                "last_name": user.last_name
-                            }}
+            res = Response(
+                {
+                    "success": True,
+                    "user": {
+                        "email": user.email,
+                        "first_name": user.first_name,
+                        "last_name": user.last_name,
+                    }
+                },
+                status=status.HTTP_200_OK
+            )
 
-                res.set_cookie(
-                    'access_token',
-                    access_token,
-                    max_age=settings.AUTH_COOKIE_ACCESS_MAX_AGE,
-                    httponly=settings.AUTH_COOKIE_HTTP_ONLY,
-                    secure=settings.AUTH_COOKIE_SECURE,
-                    samesite=settings.AUTH_COOKIE_SAMESITE,
-                    path=settings.AUTH_COOKIE_PATH,
-                )
+            res.set_cookie(
+                "access_token",
+                tokens["access"],
+                max_age=settings.AUTH_COOKIE_ACCESS_MAX_AGE,
+                httponly=settings.AUTH_COOKIE_HTTP_ONLY,
+                secure=settings.AUTH_COOKIE_SECURE,
+                samesite=settings.AUTH_COOKIE_SAMESITE,
+                path=settings.AUTH_COOKIE_PATH,
+            )
 
-                res.set_cookie(
-                    'refresh_token',
-                    refresh_token,
-                    max_age=settings.AUTH_COOKIE_REFRESH_MAX_AGE,
-                    httponly=settings.AUTH_COOKIE_HTTP_ONLY,
-                    secure=settings.AUTH_COOKIE_SECURE,
-                    samesite=settings.AUTH_COOKIE_SAMESITE,
-                    path=settings.AUTH_COOKIE_PATH,
-                )
-                return res
-        except:
-            return Response({'success': False})
+            res.set_cookie(
+                "refresh_token",
+                tokens["refresh"],
+                max_age=settings.AUTH_COOKIE_REFRESH_MAX_AGE,
+                httponly=settings.AUTH_COOKIE_HTTP_ONLY,
+                secure=settings.AUTH_COOKIE_SECURE,
+                samesite=settings.AUTH_COOKIE_SAMESITE,
+                path=settings.AUTH_COOKIE_PATH,
+            )
+
+            return res
+        except Exception as e:
+            return Response({"success": False}, status=status.HTTP_401_UNAUTHORIZED)
     
 class CustomTokenRefreshView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
-        try:
-            refresh_token = request.COOKIES.get('refresh_token')
-            if refresh_token:
-                request.data['refresh'] = refresh_token
+        refresh_token = request.COOKIES.get("refresh_token")
+        if not refresh_token:
+            refresh_token = request.data.get("refresh")
+            if not refresh_token:
+                return Response({"detail": "No refresh token"}, status=401)
 
-            response = super().post(request, *args, **kwargs)
-            if response.status_code == 200:
-                access_token = response.data.get('access')
+        request.data["refresh"] = refresh_token
 
-                res = Response()
-                res.data = {'success': True}
-
-                res.set_cookie(
-                    'access_token',
-                    access_token,
-                    max_age=settings.AUTH_COOKIE_ACCESS_MAX_AGE,
-                    path=settings.AUTH_COOKIE_PATH,
-                    secure=settings.AUTH_COOKIE_SECURE,
-                    httponly=settings.AUTH_COOKIE_HTTP_ONLY,
-                    samesite=settings.AUTH_COOKIE_SAMESITE
-                )
-
-                return res
-        except:
-            return Response({'success': False})
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         
+        access = serializer.validated_data["access"]
+
+        res = Response({"success": True})
+
+        res.set_cookie(
+            "access_token",
+            access,
+            max_age=settings.AUTH_COOKIE_ACCESS_MAX_AGE,
+            httponly=settings.AUTH_COOKIE_HTTP_ONLY,
+            secure=settings.AUTH_COOKIE_SECURE,
+            samesite=settings.AUTH_COOKIE_SAMESITE,
+            path=settings.AUTH_COOKIE_PATH,
+        )
+
+        return res
  
-@api_view(['POST'])
+@api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def logout(request):
-    try:
-        res = Response()
-        res.data = {'success':True}
-        res.delete_cookie('access_token', path='/', samesite='None')
-        res.delete_cookie('refresh_token', path='/', samesite='None')
-        return res
-    except:
-        return Response({'success':False})
+    res = Response({"success": True})
+
+    res.delete_cookie("access_token", path="/")
+    res.delete_cookie("refresh_token", path="/api/auth/refresh/")
+
+    return res

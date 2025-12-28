@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     # local apps
     'apps.accounts',
 ]
+INSTALLED_APPS += ["rest_framework_simplejwt.token_blacklist"]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -136,6 +137,11 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'apps.accounts.authentication.CookiesJWTAuthentication',
     )
+}
+
+SIMPLE_JWT = {
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
 }
 
 AUTH_COOKIE = "access_token"
