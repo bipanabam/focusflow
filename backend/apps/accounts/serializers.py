@@ -31,3 +31,10 @@ class UserSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
+    
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'timezone', 'pomodoro_settings']
+        read_only_fields = ['email']
+        optional_fields = ['timezone', 'pomodoro_settings']
