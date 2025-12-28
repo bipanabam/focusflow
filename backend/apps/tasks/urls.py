@@ -6,5 +6,5 @@ from apps.tasks import views
 urlpatterns = []
 
 router = DefaultRouter()
-router.register(r'tasks', views.TaskViewSet, basename='task')
+router.register('tasks', views.TaskViewSet, basename='task')
 urlpatterns += router.urls
