@@ -25,3 +25,6 @@ Content-Type: application/json
 {
     "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc2Njk5OTA5NiwiaWF0IjoxNzY2OTEyNjk2LCJqdGkiOiI4YzkwOTA5Mzk3MWM0YTMxOWJjODFkYzRmZDQxMGMwNiIsInVzZXJfaWQiOiIzIn0.2RSFwuamNYSN48DXtATVpSp8ABir7Ewkk3liCfslTC8"
 }
+
+### Logout User
+POST http://localhost:8000/auth/logout/
