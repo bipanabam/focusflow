@@ -1,11 +1,11 @@
 from django.urls import path
-from apps.accounts.views import UserCreateView, CustomTokenObtainPairView, CustomTokenRefreshView, logout, UserProfileView, UserSettingsView
+from apps.accounts import views
 
 urlpatterns = [
-    path('register/', UserCreateView.as_view(), name='user-register'),
-    path('login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
-    path('logout/', logout, name='logout'),
-    path('profile/', UserProfileView.as_view(), name='user-profile'),
-    path('change-password/', UserSettingsView.as_view(), name='change-password'),
+    path('register/', views.UserCreateView.as_view(), name='user-register'),
+    path('login/', views.CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/refresh/', views.CustomTokenRefreshView.as_view(), name='token_refresh'),
+    path('logout/', views.logout, name='logout'),
+    path('profile/', views.UserProfileView.as_view(), name='user-profile'),
+    path('change-password/', views.UserSettingsView.as_view(), name='change-password'),
 ]

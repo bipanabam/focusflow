@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'corsheaders',
     # local apps
     'apps.accounts',
+    'apps.tasks',
 ]
 INSTALLED_APPS += ["rest_framework_simplejwt.token_blacklist"]
 
