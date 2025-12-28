@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from apps.accounts.models import User
 
-from apps.accounts.serializers import UserSerializer, UserProfileSerializer
+from apps.accounts.serializers import UserSerializer, UserProfileSerializer, UserSettingsSerializer
 from rest_framework import generics
 
 # Create your views here.
@@ -100,14 +100,23 @@ def logout(request):
 class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
-    
+
     def get_object(self):
         return self.request.user
     
+class UserSettingsView(generics.UpdateAPIView):
+    serializer_class = UserSettingsSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+
     def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer = self.get_serializer(
+            self.get_object(),
+            data=request.data,
+        )
         serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response(serializer.data)
+        serializer.save()
+
+        return Response({"success": True}, status=status.HTTP_200_OK)
