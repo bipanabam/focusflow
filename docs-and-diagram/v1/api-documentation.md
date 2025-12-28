@@ -1222,3 +1222,436 @@ GET /api/v2/organizations/{slug}/analytics/projects/{project_id}/
 
 **Response (200):**
 ```json
+{
+  "project": {
+    "id": 3,
+    "name": "Client Project A"
+  },
+  "date_range": {
+    "start": "2025-01-01",
+    "end": "2025-01-20"
+  },
+  "total_focus_hours": 85.5,
+  "total_tasks": 45,
+  "completed_tasks": 38,
+  "in_progress_tasks": 5,
+  "avg_task_duration_hours": 1.9,
+  "contributors": [
+    {
+      "user": {
+        "id": 2,
+        "username": "janedoe"
+      },
+      "focus_hours": 45.5,
+      "tasks_completed": 20,
+      "contribution_percentage": 53.2
+    }
+  ],
+  "timeline": [
+    {
+      "date": "2025-01-20",
+      "focus_hours": 6.5,
+      "tasks_completed": 3
+    }
+  ]
+}
+```
+
+### 11.3 Export Team Reports
+```http
+GET /api/v2/organizations/{slug}/analytics/export/
+```
+
+**Permissions:** Manager or Admin
+
+**Query Parameters:**
+- `format` (string): pdf, csv, excel
+- `report_type` (string): team, project, individual
+- `start_date` (date)
+- `end_date` (date)
+
+**Response (200):** File download
+
+---
+
+## 12. WebSocket Events
+
+### Connection
+```javascript
+const ws = new WebSocket('wss://api.focusflow.com/ws/pomodoro/');
+ws.send(JSON.stringify({
+  "token": "eyJ0eXAiOiJKV1QiLCJhbG..."
+}));
+```
+
+### V1 Events (Personal)
+
+#### User Started Task
+```json
+{
+  "type": "task_started",
+  "data": {
+    "task_id": 1,
+    "title": "Write blog post",
+    "started_at": "2025-01-20T10:00:00Z",
+    "pomodoro_session": {
+      "id": 1,
+      "duration_minutes": 25
+    }
+  }
+}
+```
+
+#### User Paused Task
+```json
+{
+  "type": "task_paused",
+  "data": {
+    "task_id": 1,
+    "paused_at": "2025-01-20T10:15:00Z",
+    "elapsed_seconds": 900
+  }
+}
+```
+
+#### User Resumed Task
+```json
+{
+  "type": "task_resumed",
+  "data": {
+    "task_id": 1,
+    "resumed_at": "2025-01-20T10:20:00Z",
+    "remaining_seconds": 600
+  }
+}
+```
+
+#### User Completed Task
+```json
+{
+  "type": "task_completed",
+  "data": {
+    "task_id": 1,
+    "title": "Write blog post",
+    "completed_at": "2025-01-20T11:30:00Z",
+    "total_focus_seconds": 4500,
+    "completed_pomodoros": 3
+  }
+}
+```
+
+#### Pomodoro Session Completed
+```json
+{
+  "type": "pomodoro_completed",
+  "data": {
+    "session_id": 1,
+    "task_id": 1,
+    "completed_at": "2025-01-20T10:25:00Z",
+    "play_sound": true
+  }
+}
+```
+
+#### Break Started
+```json
+{
+  "type": "break_started",
+  "data": {
+    "session_id": 2,
+    "break_type": "short",
+    "duration_minutes": 5,
+    "started_at": "2025-01-20T10:25:00Z"
+  }
+}
+```
+
+### V2 Events (Organization)
+
+#### Employee Task Started (Manager Channel)
+```json
+{
+  "type": "employee_task_started",
+  "data": {
+    "user": {
+      "id": 2,
+      "username": "janedoe",
+      "first_name": "Jane"
+    },
+    "task": {
+      "id": 45,
+      "title": "Code review",
+      "project": "Client Project A"
+    },
+    "started_at": "2025-01-20T09:15:00Z"
+  }
+}
+```
+
+#### Employee Task Completed (Manager Channel)
+```json
+{
+  "type": "employee_task_completed",
+  "data": {
+    "user": {
+      "id": 2,
+      "username": "janedoe"
+    },
+    "task": {
+      "id": 45,
+      "title": "Code review"
+    },
+    "completed_at": "2025-01-20T10:30:00Z",
+    "total_focus_seconds": 4500
+  }
+}
+```
+
+#### Employee Idle Alert (Manager Channel)
+```json
+{
+  "type": "employee_idle",
+  "data": {
+    "user": {
+      "id": 3,
+      "username": "bobsmith"
+    },
+    "idle_since": "2025-01-20T08:00:00Z",
+    "idle_duration_minutes": 45
+  }
+}
+```
+
+#### Task Assigned (Employee Channel)
+```json
+{
+  "type": "task_assigned",
+  "data": {
+    "task": {
+      "id": 50,
+      "title": "Implement feature X",
+      "priority": "high"
+    },
+    "assigned_by": {
+      "id": 2,
+      "username": "janedoe"
+    },
+    "assigned_at": "2025-01-20T10:00:00Z"
+  }
+}
+```
+
+---
+
+## Error Responses
+
+### Standard Error Format
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid input data",
+    "details": {
+      "email": ["This email is already registered"],
+      "password": ["Password must be at least 8 characters"]
+    }
+  }
+}
+```
+
+### Common Error Codes
+
+| HTTP Status | Error Code | Description |
+|-------------|------------|-------------|
+| 400 | VALIDATION_ERROR | Invalid request data |
+| 401 | AUTHENTICATION_FAILED | Invalid credentials |
+| 401 | TOKEN_EXPIRED | JWT token expired |
+| 403 | PERMISSION_DENIED | Insufficient permissions |
+| 404 | NOT_FOUND | Resource not found |
+| 409 | CONFLICT | Resource conflict (e.g., duplicate) |
+| 429 | RATE_LIMIT_EXCEEDED | Too many requests |
+| 500 | INTERNAL_ERROR | Server error |
+
+---
+
+## Rate Limiting
+
+### V1 Limits (Individual Users)
+- **Standard endpoints**: 100 requests/minute
+- **Authentication**: 10 requests/minute
+- **Analytics**: 30 requests/minute
+
+### V2 Limits (Organizations)
+- **Standard endpoints**: 300 requests/minute per organization
+- **Dashboard/Analytics**: 60 requests/minute
+- **WebSocket connections**: 50 connections per organization
+
+### Rate Limit Headers
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1642680000
+```
+
+---
+
+## Pagination
+
+### Standard Pagination
+All list endpoints support pagination:
+
+**Query Parameters:**
+- `page` (int): Page number (default: 1)
+- `page_size` (int): Items per page (default: 20, max: 100)
+
+**Response:**
+```json
+{
+  "count": 150,
+  "next": "https://api.focusflow.com/api/v1/tasks/?page=3",
+  "previous": "https://api.focusflow.com/api/v1/tasks/?page=1",
+  "results": [...]
+}
+```
+
+---
+
+## Webhooks (V2 Only)
+
+### Configure Webhook
+```http
+POST /api/v2/organizations/{slug}/webhooks/
+```
+
+**Request Body:**
+```json
+{
+  "url": "https://your-server.com/webhooks/focusflow",
+  "events": ["task_completed", "employee_idle"],
+  "secret": "your-webhook-secret"
+}
+```
+
+### Webhook Payload
+```json
+{
+  "event": "task_completed",
+  "organization": {
+    "id": 1,
+    "slug": "acme-startup"
+  },
+  "data": {
+    "user": {...},
+    "task": {...}
+  },
+  "timestamp": "2025-01-20T10:30:00Z",
+  "signature": "sha256=abc123..."
+}
+```
+
+---
+
+## API Versioning Strategy
+
+### Version Migration Path
+- **V1 APIs**: Remain stable, never breaking changes
+- **V2 APIs**: Additive only, V1 functionality preserved
+- **Deprecation**: 6-month notice before removing any endpoint
+- **Version header**: `Accept: application/json; version=2.0`
+
+### Backward Compatibility
+- V1 users can access V1 endpoints indefinitely
+- V2 users can access both V1 and V2 endpoints
+- V1 data automatically compatible with V2 (nullable organization fields)
+
+---
+
+## Development & Testing
+
+### Base URLs
+- **Production**: `https://api.focusflow.com`
+- **Staging**: `https://staging-api.focusflow.com`
+- **Development**: `http://localhost:8000`
+
+### Test Credentials
+```
+Email: demo@focusflow.com
+Password: DemoPass123!
+```
+
+### Postman Collection
+Available at: `https://documenter.getpostman.com/focusflow-api`
+
+### OpenAPI/Swagger
+- V1: `https://api.focusflow.com/api/v1/docs/`
+- V2: `https://api.focusflow.com/api/v2/docs/`
+
+---
+
+## SDK Support
+
+### Official SDKs
+- **Python**: `pip install focusflow-sdk`
+- **JavaScript**: `npm install @focusflow/sdk`
+- **React Hooks**: `npm install @focusflow/react-hooks`
+
+### Example Usage (Python)
+```python
+from focusflow import FocusFlowClient
+
+client = FocusFlowClient(api_key='your-api-key')
+
+# Create task
+task = client.tasks.create(
+    title="Review documentation",
+    project_id=1,
+    estimated_pomodoros=2
+)
+
+# Start task
+session = client.tasks.start(task.id)
+print(f"Session ends at: {session.ends_at}")
+
+# Get analytics
+report = client.analytics.daily(date='2025-01-20')
+print(f"Focus time: {report.total_focus_hours} hours")
+```
+
+### Example Usage (JavaScript)
+```javascript
+import { FocusFlowClient } from '@focusflow/sdk';
+
+const client = new FocusFlowClient({ apiKey: 'your-api-key' });
+
+// Create task
+const task = await client.tasks.create({
+  title: 'Review documentation',
+  projectId: 1,
+  estimatedPomodoros: 2
+});
+
+// Start task
+const session = await client.tasks.start(task.id);
+console.log(`Session ends at: ${session.endsAt}`);
+
+// WebSocket connection
+client.on('task_started', (data) => {
+  console.log(`Started: ${data.task.title}`);
+});
+```
+
+---
+
+## Support & Resources
+
+- **Documentation**: https://docs.focusflow.com
+- **API Status**: https://status.focusflow.com
+- **Community Forum**: https://community.focusflow.com
+- **Email Support**: api-support@focusflow.com
+- **GitHub**: https://github.com/focusflow/api-examples
+
+---
+
+*API Documentation Version: 2.0*  
+*Last Updated: January 20, 2025*  
+*For questions or feedback: api-support@focusflow.com*

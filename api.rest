@@ -1,5 +1,5 @@
 ### Register User
-POST http://localhost:8000/api/auth/register/
+POST http://localhost:8000/auth/register/
 Content-Type: application/json
 
 {
@@ -7,4 +7,21 @@ Content-Type: application/json
     "last_name": "User",
     "email": "newuser1@example.com",
     "password": "securepassword123"
+}
+
+### Login User
+POST http://localhost:8000/auth/login/
+Content-Type: application/json
+
+{
+    "email": "newuser1@example.com",
+    "password": "securepassword123"
+}
+
+### Refresh Token
+POST http://localhost:8000/auth/token/refresh/
+Content-Type: application/json
+
+{
+    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc2Njk5OTA5NiwiaWF0IjoxNzY2OTEyNjk2LCJqdGkiOiI4YzkwOTA5Mzk3MWM0YTMxOWJjODFkYzRmZDQxMGMwNiIsInVzZXJfaWQiOiIzIn0.2RSFwuamNYSN48DXtATVpSp8ABir7Ewkk3liCfslTC8"
 }

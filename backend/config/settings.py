@@ -134,7 +134,7 @@ CORS_ALLOW_CREDENTIALS = True
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'apps.accounts.authentication.CookiesJWTAuthentication',
     )
 }
 
@@ -144,4 +144,4 @@ AUTH_COOKIE_REFRESH_MAX_AGE = 60 * 60 * 24
 AUTH_COOKIE_SECURE = True  #SSL Connection
 AUTH_COOKIE_HTTP_ONLY = True #Flag: So that javascript cannot access the values in the browser
 AUTH_COOKIE_PATH = '/'
-AUTH_COOKIE_SAMESITE = 'None'
+AUTH_COOKIE_SAMESITE = 'Lax' #None, Lax, Strict
