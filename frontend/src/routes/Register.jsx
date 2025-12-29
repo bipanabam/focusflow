@@ -4,6 +4,9 @@ import FormInput from "../components/FormInput";
 import PasswordStrength from "../components/PasswordStrength";
 import Spinner from "../components/Spinner";
 import PasswordRulesTooltip from "../components/PasswordRulesTooltip";
+import { useNavigate } from 'react-router-dom';
+
+import { registerUser } from "../api/apiEndpoints";
 
 const Register = () => {
     const [form, setForm] = useState({
@@ -15,6 +18,7 @@ const Register = () => {
     });
     const [showRules, setShowRules] = useState(false);
     const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
     const passwordMismatch =
         form.confirmPassword &&
         form.password !== form.confirmPassword;
@@ -25,17 +29,30 @@ const Register = () => {
     };
 
 
-    const handleSubmit = async () => {
+    const handleRegister = async () => {
 
         setLoading(true);
 
         try {
-            await new Promise((res) => setTimeout(res, 2000)); // simulate API
+            await registerUser(
+                form.email,
+                form.firstName,
+                form.lastName,
+                form.password
+            );
+            alert('Account Successfully registered.')
+            navigate('/login')
+        } catch (error) {
             console.log("Register data:", form);
+            alert('Registration failed. Please try again.')
         } finally {
             setLoading(false);
         }
     };
+
+    const handleNav = () => {
+        navigate('/login')
+    }
 
     return (
         <div className="min-h-[calc(100vh-90px)] flex items-center justify-center">
@@ -44,7 +61,7 @@ const Register = () => {
                 footer={
                     <>
                         Already have an account?{" "}
-                        <span className="text-blue-500 cursor-pointer">
+                        <span className="text-blue-500 cursor-pointer" onClick={handleNav}>
                             Login
                         </span>
                     </>
@@ -55,7 +72,7 @@ const Register = () => {
                         className="flex flex-col gap-3"
                         onSubmit={(e) => {
                             e.preventDefault();
-                            handleSubmit();
+                            handleRegister();
                         }}
                     >
 
