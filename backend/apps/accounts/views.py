@@ -26,6 +26,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 {
                     "success": True,
                     "user": {
+                        "id": user.id,
                         "email": user.email,
                         "first_name": user.first_name,
                         "last_name": user.last_name,
@@ -93,9 +94,14 @@ def logout(request):
     res = Response({"success": True})
 
     res.delete_cookie("access_token", path="/")
-    res.delete_cookie("refresh_token", path="/api/auth/refresh/")
+    res.delete_cookie("refresh_token", path="/auth/refresh/")
 
     return res
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def authenticated(request):
+    return Response("authenticated!")
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserProfileSerializer
