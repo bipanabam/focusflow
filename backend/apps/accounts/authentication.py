@@ -1,6 +1,7 @@
 from django.conf import settings
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework.exceptions import AuthenticationFailed
 
 class CookiesJWTAuthentication(JWTAuthentication):
     """
@@ -22,5 +23,4 @@ class CookiesJWTAuthentication(JWTAuthentication):
 
             return self.get_user(validated_token), validated_token
         except (InvalidToken, TokenError):
-                # Invalid or expired token → unauthenticated
-                return None
+            raise AuthenticationFailed("Access token expired or invalid")

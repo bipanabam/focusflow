@@ -53,7 +53,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -146,14 +146,14 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ROTATE_REFRESH_TOKENS": True,
-    "BLACKLIST_AFTER_ROTATION": True,
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": False,
 }
 
 AUTH_COOKIE = "access_token"
-AUTH_COOKIE_ACCESS_MAX_AGE = 60 * 5
-AUTH_COOKIE_REFRESH_MAX_AGE = 60 * 60 * 24
-AUTH_COOKIE_SECURE = True  #SSL Connection
+AUTH_COOKIE_ACCESS_MAX_AGE = 60 * 5  # 5 minutes
+AUTH_COOKIE_REFRESH_MAX_AGE = 60 * 60 * 24  # 1 day
+AUTH_COOKIE_SECURE = False  #SSL Connection
 AUTH_COOKIE_HTTP_ONLY = True #Flag: So that javascript cannot access the values in the browser
 AUTH_COOKIE_PATH = '/'
-AUTH_COOKIE_SAMESITE = 'Lax' #None, Lax, Strict
+AUTH_COOKIE_SAMESITE = 'Lax' #None, Lax, Strict - Use 'Lax' for development (HTTP), 'None' requires HTTPS

@@ -25,15 +25,18 @@ export const login = async (email, password) => {
 
 export const authenticated = async () => {
     const response = await API.get('/auth/authenticated/')
-    console.log(response)
     return response.data;
 }
 
 export const refresh_token = async () => {
-    const response = await API.post('/auth/token/refresh/')
-    console.log(response.data)
-    return response.data;
-}
+    try {
+        const res = await API.post("/auth/token/refresh/");
+        return res.data;
+    } catch (err) {
+        console.error("Refresh failed:", err.response?.data);
+        throw err;
+    }
+};
 
 export const logout = async () => {
     const response = await API.post('/auth/logout/')

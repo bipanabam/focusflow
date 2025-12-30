@@ -1,7 +1,7 @@
 from django.conf import settings
 from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated   
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from apps.accounts.models import User
@@ -60,41 +60,48 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             return Response({"success": False}, status=status.HTTP_401_UNAUTHORIZED)
     
 class CustomTokenRefreshView(TokenRefreshView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    
     def post(self, request, *args, **kwargs):
-        refresh_token = request.COOKIES.get("refresh_token")
-        if not refresh_token:
-            refresh_token = request.data.get("refresh")
+        try:
+            refresh_token = request.COOKIES.get("refresh_token")
             if not refresh_token:
-                return Response({"detail": "No refresh token"}, status=401)
+                return Response({"detail": "No refresh token provided"}, status=401)
 
-        request.data["refresh"] = refresh_token
+            serializer = self.get_serializer(data={"refresh": refresh_token})
+            serializer.is_valid(raise_exception=True)
+            access = serializer.validated_data["access"]
 
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        
-        access = serializer.validated_data["access"]
+            res = Response({"success": True})
 
-        res = Response({"success": True})
+            res.set_cookie(
+                "access_token",
+                access,
+                max_age=settings.AUTH_COOKIE_ACCESS_MAX_AGE,
+                httponly=settings.AUTH_COOKIE_HTTP_ONLY,
+                secure=settings.AUTH_COOKIE_SECURE,
+                samesite=settings.AUTH_COOKIE_SAMESITE,
+                path=settings.AUTH_COOKIE_PATH,
+            )
 
-        res.set_cookie(
-            "access_token",
-            access,
-            max_age=settings.AUTH_COOKIE_ACCESS_MAX_AGE,
-            httponly=settings.AUTH_COOKIE_HTTP_ONLY,
-            secure=settings.AUTH_COOKIE_SECURE,
-            samesite=settings.AUTH_COOKIE_SAMESITE,
-            path=settings.AUTH_COOKIE_PATH,
-        )
+            return res
+        except Exception as e:
+            print("REFRESH ERROR:", e)
+            return Response(
+                {"success": False, "detail": str(e)},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
 
-        return res
- 
+            
+    
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def logout(request):
     res = Response({"success": True})
 
     res.delete_cookie("access_token", path="/")
-    res.delete_cookie("refresh_token", path="/auth/refresh/")
+    res.delete_cookie("refresh_token", path="/")
 
     return res
 

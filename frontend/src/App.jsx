@@ -3,6 +3,7 @@ import './App.css'
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import PublicRoute from './components/PublicRoute';
 
 import Layout from './components/Layout'
 import Home from './routes/Home'
@@ -15,8 +16,8 @@ function App() {
     <div className="min-w-full">
       <AuthProvider>
         <Routes>
-          <Route path='/register' element={<Layout><Register /></Layout>} />
-          <Route path='/login' element={<Layout><Login /></Layout>} />
+          <Route path='/register' element={<Layout><PublicRoute><Register /></PublicRoute></Layout>} />
+          <Route path='/login' element={<Layout><PublicRoute><Login /></PublicRoute></Layout>} />
 
           <Route path='/' element={<Layout>
             <ProtectedRoute><Home /></ProtectedRoute></Layout>} />

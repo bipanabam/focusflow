@@ -3,9 +3,9 @@ import axios from 'axios';
 import { refresh_token } from './apiEndpoints';
 
 const API = axios.create({
-    baseURL: 'http://127.0.0.1:8000/',
-    timeout: 5000,
-    withCredentials: true,
+    baseURL: "http://localhost:8000/",
+    withCredentials: true, // send cookies automatically
+    timeout: 10000, // 10 second timeout
 });
 
 // Track if we're currently refreshing to prevent multiple simultaneous refresh calls
@@ -28,16 +28,19 @@ API.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        // Don't retry refresh endpoint itself
-        if (originalRequest.url?.includes('/auth/token/refresh/')) {
-            isRefreshing = false;
+        // Prevent infinite loops - skip retry for refresh endpoint, network errors, and already retried requests
+        if (
+            originalRequest.url?.includes('/auth/token/refresh/') ||
+            !error.response ||
+            originalRequest._retry
+        ) {
             return Promise.reject(error);
         }
 
-        // Handle 401 errors
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // Handle 401 Unauthorized errors
+        if (error.response?.status === 401) {
             if (isRefreshing) {
-                // If already refreshing, queue this request
+                // If already refreshing, queue this request to retry after refresh completes
                 return new Promise((resolve, reject) => {
                     failedQueue.push({ resolve, reject });
                 })
@@ -50,10 +53,10 @@ API.interceptors.response.use(
 
             try {
                 await refresh_token();
-                processQueue(null);
-                return API(originalRequest);
+                processQueue(null); // Notify queued requests to retry
+                return API(originalRequest); // Retry the original request
             } catch (refreshError) {
-                processQueue(refreshError);
+                processQueue(refreshError); // Reject all queued requests
 
                 // Dispatch custom event for auth failure
                 window.dispatchEvent(new CustomEvent('auth:logout'));
