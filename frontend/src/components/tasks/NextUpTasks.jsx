@@ -1,6 +1,9 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const NextUpTasks = ({ tasks }) => {
+    const navigate = useNavigate();
+
     return (
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-gray-200 dark:border-gray-700 h-full">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Next Up</h3>
@@ -35,7 +38,9 @@ const NextUpTasks = ({ tasks }) => {
                 ))}
             </div>
 
-            <button className="w-full mt-6 py-2 text-blue-600 dark:text-blue-400 font-medium hover:text-blue-700 dark:hover:text-blue-300 text-sm transition">
+            <button 
+            onClick={() => navigate('/tasks')}
+            className="w-full mt-6 py-2 text-blue-600 dark:text-blue-400 font-medium hover:text-blue-700 dark:hover:text-blue-300 text-sm transition">
                 View All Tasks →
             </button>
         </div>

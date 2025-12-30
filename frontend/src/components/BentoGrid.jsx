@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import CurrentTaskTimer from "./CurrentTaskTimer";
-import NextUpTasks from "./NextUpTasks";
+import NextUpTasks from "./tasks/NextUpTasks";
 import DailyFlow from "./DailyFlow";
 import StreaksAndBadges from "./StreaksAndBadges";
-import TaskCard from "./TaskCard";
-import PreviousTasks from "./PreviousTasks";
+import TaskCard from "./tasks/TaskCard";
+import PreviousTasks from "./tasks/PreviousTasks";
 import StatsHeader from "./StatsHeader";
 import FocusMode from "./FocusMode";
 import WeeklyOverview from "./WeeklyOverview";
@@ -106,7 +106,7 @@ const BentoGrid = () => {
                 </section> */}
 
                 {/* Section 4: Quick Actions & Tasks */}
-                <section className="mb-12">
+                {/* <section className="mb-12">
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Actions & Tasks</h2>
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                         <QuickActions />
@@ -135,12 +135,12 @@ const BentoGrid = () => {
                             </div>
                         </div>
                     </div>
-                </section>
+                </section> */}
 
                 {/* Section 5: Task History */}
                 {/* <section className="mb-12">
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Work History</h2>
-                    <PreviousTasks tasks={tasks} />
+                    <PreviousTasks tasks={pinnedTasks} />
                 </section> */}
             </div>
         </div>
