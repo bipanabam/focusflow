@@ -1,7 +1,10 @@
-export const Card = ({ children, className }) => {
+export const Card = ({ title, children, className }) => {
   return (
-    <div className={`bg-gray-800 shadow-md rounded-lg p-4 ${className}`}>
+    <div className={`w-full max-w-sm bg-gray-700 shadow-lg rounded-xl p-6 ${className}`}>
+        <h2 className="text-2xl font-semibold text-center mb-4">
+          {title}
+        </h2>
         {children}
-        </div>
+    </div>
     )
-    }       
+}       

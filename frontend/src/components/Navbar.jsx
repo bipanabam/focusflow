@@ -64,7 +64,7 @@ const Navbar = () => {
                     <div className='flex items-center gap-4'>
                         {/* Add Task */}
                         <button
-                            onClick={() => navigate('/')}
+                            onClick={() => navigate('/tasks/create')}
                             className='p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition'
                             title='Add new task'
                         >

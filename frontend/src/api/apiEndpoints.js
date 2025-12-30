@@ -46,6 +46,18 @@ export const logout = async () => {
 // Task's Endpoints
 export const getTodaysTask = async (num, today) => {
     const response = await API.get(`/tasks/?page=${num}&created_at=${today}`);
-    console.log(response.data)
+    return response.data
+}
+
+export const createTask = async (title, description, category, priority, status) => {
+    const response = await API.post('/tasks/',
+        {
+            title: title,
+            description: description,
+            category: category,
+            priority: priority,
+            status: status
+        }
+    );
     return response.data
 }
