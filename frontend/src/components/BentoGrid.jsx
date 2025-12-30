@@ -9,47 +9,56 @@ import StatsHeader from "./StatsHeader";
 import FocusMode from "./FocusMode";
 import WeeklyOverview from "./WeeklyOverview";
 import QuickActions from "./QuickActions";
+import Spinner from "./Spinner";
+
+import {getTodaysTask} from "../api/apiEndpoints";
 
 const BentoGrid = () => {
-    const [tasks, setTasks] = useState([]);
+    const [pinnedTasks, setPinnedTasks] = useState([]);
+    const [paginatedTasks, setPaginatedTasks] = useState([]);
+    const [nextPage, setNextPage] = useState(1);
+    const [currentPage, setCurrentPage] = useState(1);
     const [loading, setLoading] = useState(true);
 
+    const fetchPinnedTasks = async () => {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const data = await getTodaysTask(1, todayStr);
+        setPinnedTasks(data.results || data);
+    };
+
+    const fetchTodaysTaskData = async (page) => {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const data = await getTodaysTask(page, todayStr);
+        setPaginatedTasks(data.results || data);
+        setNextPage(data.next ? page + 1 : null);
+    };
+
+    // Fetch pinned tasks ONCE
     useEffect(() => {
-        const mockTasks = [
-            {
-                id: 1,
-                title: "Writing Q2 Project Plan",
-                category: "Work",
-                duration: 1500,
-                timeRemaining: 1499,
-                status: "in-progress"
-            },
-            {
-                id: 2,
-                title: "Review PRs",
-                category: "Team",
-                duration: 900,
-                status: "pending"
-            },
-            {
-                id: 3,
-                title: "Finish Book Chapter",
-                category: "Personal",
-                duration: 1800,
-                status: "pending"
-            },
-            {
-                id: 4,
-                title: "Update Calendar",
-                category: "Admin",
-                duration: 600,
-                status: "pending"
-            }
-        ];
-        
-        setTasks(mockTasks);
-        setLoading(false);
+        fetchPinnedTasks();
     }, []);
+
+    useEffect (() => {
+        try {
+            fetchTodaysTaskData(currentPage)
+        } catch {
+            alert('error getting posts')
+        } finally {
+            setLoading(false)
+        }
+    }, [currentPage])
+
+    const loadMoreTasks = () => {
+        if (nextPage) {
+            setCurrentPage((prev) => prev + 1);
+        }
+    };
+
+    const loadPreviousTasks = () => {
+        if (currentPage > 1) {
+            setCurrentPage((prev) => prev - 1);
+        }
+    };
 
     if (loading) {
         return (
@@ -73,14 +82,14 @@ const BentoGrid = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Current Task Timer */}
                         <div className="lg:col-span-1 lg:row-span-2">
-                            <CurrentTaskTimer task={tasks[0]} />
+                            <CurrentTaskTimer task={pinnedTasks[0]} />
                         </div>
 
                         {/* Right Column */}
                         <div className="lg:col-span-2 space-y-6">
                             {/* Next Up & Streaks */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <NextUpTasks tasks={tasks.slice(1, 3)} />
+                                <NextUpTasks tasks={pinnedTasks.slice(1, 3)} />
                                 <StreaksAndBadges />
                             </div>
                         </div>
@@ -103,9 +112,23 @@ const BentoGrid = () => {
                         <QuickActions />
                         <div className="lg:col-span-3">
                             <div className="space-y-3">
-                                <h3 className="font-semibold text-lg text-gray-900 dark:text-white">Today's Tasks</h3>
+                                <div className="flex items-center justify-between">
+                                    <h3 className="font-semibold text-lg text-gray-900 dark:text-white">Today's Tasks</h3>
+                                    <div className="flex flex-row gap-6">
+                                        {currentPage > 1 && !loading && (
+                                            <button onClick={loadPreviousTasks}  className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition">
+                                                ← Previous
+                                            </button>
+                                        )}
+                                        {nextPage && !loading && (
+                                            <button onClick={loadMoreTasks}  className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition">
+                                                Load More →
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                    {tasks.map((task) => (
+                                    {paginatedTasks.map((task) => (
                                         <TaskCard key={task.id} task={task} />
                                     ))}
                                 </div>

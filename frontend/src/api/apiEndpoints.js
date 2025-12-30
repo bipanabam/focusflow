@@ -42,3 +42,10 @@ export const logout = async () => {
     const response = await API.post('/auth/logout/')
     return response
 }
+
+// Task's Endpoints
+export const getTodaysTask = async (num, today) => {
+    const response = await API.get(`/tasks/?page=${num}&created_at=${today}`);
+    console.log(response.data)
+    return response.data
+}

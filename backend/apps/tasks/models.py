@@ -14,6 +14,10 @@ class Task(models.Model):
         ('medium', 'Medium'),
         ('high', 'High'),
     ]
+    CATEGORY_CHOICES = [
+        ('personal', 'Personal'),
+        ('work', 'Work'),
+    ]
     
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
@@ -33,6 +37,7 @@ class Task(models.Model):
     estimated_pomodoros = models.IntegerField(null=True, blank=True)
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    category = models.CharField(max_length=10, choices=CATEGORY_CHOICES, default='personal')
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

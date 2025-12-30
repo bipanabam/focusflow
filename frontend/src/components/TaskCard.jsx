@@ -9,18 +9,28 @@ const TaskCard = ({ task }) => {
     };
 
     const statusColors = {
-        "in-progress": "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200",
-        pending: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200",
+        "completed": "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200",
+        "in_progress": "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200",
+        "pending" : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200",
+    };
+
+    const priorityColors = {
+        high: "text-red-600 dark:text-red-400",
+        medium: "text-yellow-600 dark:text-yellow-400",
+        low: "text-green-600 dark:text-green-400"
     };
 
     return (
         <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition">
             <div className="flex items-start justify-between mb-3">
-                <span className={`text-xs font-semibold px-2 py-1 rounded-full ${categoryColors[task.category] || categoryColors.Work}`}>
+                {/* <span className={`text-xs font-semibold px-2 py-1 rounded-full ${categoryColors[task.category] || categoryColors.Work}`}>
                     {task.category}
+                </span> */}
+                <span className={`text-xs font-semibold px-2 py-1 rounded-full ${priorityColors[task.priority]}`}>
+                    {task.priority}
                 </span>
                 <span className={`text-xs font-semibold px-2 py-1 rounded-full ${statusColors[task.status]}`}>
-                    {task.status === "in-progress" ? "Active" : "Pending"}
+                    {task.status === "completed" ? "Completed" : task.status === "in_progress" ? "Active" : "Pending"}
                 </span>
             </div>
 
@@ -29,9 +39,14 @@ const TaskCard = ({ task }) => {
             </h4>
 
             <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {Math.floor(task.duration / 60)}m estimated
-                </span>
+                {task.estimated_pomodoros ?
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {Math.floor(task.duration / 60)}m estimated
+                    </span> :
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                        No ET
+                    </span> 
+                }
                 <button className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition">
                     Start →
                 </button>

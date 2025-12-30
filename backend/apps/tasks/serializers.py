@@ -8,6 +8,7 @@ class TaskSerializer(serializers.ModelSerializer):
             'id',
             'title',
             'description',
+            'category',
             'priority',
             'status',
             'owner_id',

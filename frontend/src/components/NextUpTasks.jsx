@@ -12,7 +12,7 @@ const NextUpTasks = ({ tasks }) => {
                             <span className="text-sm font-semibold text-gray-500 dark:text-gray-400 min-w-6">
                                 {index + 1}.
                             </span>
-                            <div className="flex-1">
+                            <div className="flex-1 gap-2">
                                 <p className="text-sm font-medium text-gray-900 dark:text-white">
                                     {task.title}
                                 </p>
@@ -22,9 +22,14 @@ const NextUpTasks = ({ tasks }) => {
                             </div>
                         </div>
                         <div className="flex items-center gap-2 ml-9">
-                            <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-2 py-1 rounded">
-                                {Math.floor(task.duration / 60)}m
-                            </span>
+                                {task.estimated_pomodoros ? 
+                                    <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-2 py-1 rounded">
+                                        {Math.floor(task.estimated_pomodoros / 60)}m
+                                    </span> :
+                                    <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-2 py-1 rounded">
+                                        No ET
+                                    </span> 
+                                }
                         </div>
                     </div>
                 ))}
