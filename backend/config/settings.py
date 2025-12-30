@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'django_filters',
+    'drf_spectacular',
     # local apps
     'apps.accounts',
     'apps.tasks',
@@ -141,8 +142,15 @@ REST_FRAMEWORK = {
         'apps.accounts.authentication.CookiesJWTAuthentication',
     ),
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'FocusFlow Task Manager API',
+    'DESCRIPTION': 'The api documentation for FocusFlow.',
+    'VERSION': '1.0.0',
 }
 
 SIMPLE_JWT = {
