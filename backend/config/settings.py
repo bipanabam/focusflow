@@ -151,6 +151,11 @@ SPECTACULAR_SETTINGS = {
     'TITLE': 'FocusFlow Task Manager API',
     'DESCRIPTION': 'The api documentation for FocusFlow.',
     'VERSION': '1.0.0',
+    'SECURITY': [
+        {
+            'CookieAuth': [],
+        },
+    ],
 }
 
 SIMPLE_JWT = {

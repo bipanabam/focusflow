@@ -2,8 +2,9 @@ from django.conf import settings
 from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, serializers
 from apps.accounts.models import User
 
 from apps.accounts.serializers import UserSerializer, UserProfileSerializer, UserSettingsSerializer
@@ -92,9 +93,18 @@ class CustomTokenRefreshView(TokenRefreshView):
                 {"success": False, "detail": str(e)},
                 status=status.HTTP_401_UNAUTHORIZED
             )
-
-            
-    
+        
+@extend_schema(
+    summary="Logout user",
+    description="Deletes access and refresh tokens from cookies.",
+    request=None,
+    responses={
+        200: inline_serializer(
+            name='LogoutResponse',
+            fields={'success': serializers.BooleanField()}
+        )
+    }
+)   
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def logout(request):
@@ -102,13 +112,21 @@ def logout(request):
 
     res.delete_cookie("access_token", path="/")
     res.delete_cookie("refresh_token", path="/")
-
     return res
 
+
+@extend_schema(
+    responses={
+        200: inline_serializer(
+            name='AuthCheckResponse',
+            fields={'message': serializers.CharField()}
+        )
+    }
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def authenticated(request):
-    return Response("authenticated!")
+    return Response({"message": "authenticated!"})
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserProfileSerializer

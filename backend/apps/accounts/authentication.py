@@ -2,6 +2,7 @@ from django.conf import settings
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework.exceptions import AuthenticationFailed
+from drf_spectacular.extensions import OpenApiAuthenticationExtension
 
 class CookiesJWTAuthentication(JWTAuthentication):
     """
@@ -24,3 +25,14 @@ class CookiesJWTAuthentication(JWTAuthentication):
             return self.get_user(validated_token), validated_token
         except (InvalidToken, TokenError):
             raise AuthenticationFailed("Access token expired or invalid")
+        
+class CookiesJWTScheme(OpenApiAuthenticationExtension):
+    target_class = CookiesJWTAuthentication
+    name = 'CookieAuth'
+
+    def get_security_definition(self, auto_schema):
+        return {
+            'type': 'apiKey',
+            'in': 'cookie',
+            'name': 'access_token',  # Must match the cookie name in your logout view
+        }
