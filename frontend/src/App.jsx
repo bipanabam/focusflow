@@ -11,6 +11,7 @@ import Register from './routes/Register';
 import { Login } from './routes/Login';
 import CreateTask from './routes/CreateTask';
 import TaskPage from './routes/TaskPage';
+import TaskDetail from './routes/TaskDetail';
 
 function App() {
 
@@ -24,6 +25,7 @@ function App() {
           <Route path='/' element={<Layout><ProtectedRoute><Home /></ProtectedRoute></Layout>} />
           <Route path='/tasks/create' element={<Layout><ProtectedRoute><CreateTask /></ProtectedRoute></Layout>} />
           <Route path='/tasks' element={<Layout><ProtectedRoute><TaskPage /></ProtectedRoute></Layout>} />
+          <Route path='/tasks/:id' element={<Layout><ProtectedRoute><TaskDetail /></ProtectedRoute></Layout>} />
         </Routes>
       </AuthProvider>
 

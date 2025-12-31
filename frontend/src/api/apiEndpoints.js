@@ -61,3 +61,13 @@ export const createTask = async (title, description, category, priority, status)
     );
     return response.data
 }
+
+export const getTask = async (id) => {
+    const response = await API.get(`/tasks/${id}`);
+    return response.data;
+}
+
+export const updateTask = async (id, updates) => {
+    const response = await API.patch(`/tasks/${id}/`, updates);
+    return response.data;
+};
