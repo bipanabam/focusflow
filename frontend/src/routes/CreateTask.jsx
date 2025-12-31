@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 import { Card } from "../components/Card";
 import FormInput from "../components/FormInput";
@@ -17,6 +18,7 @@ const CreateTask = () => {
         status: "",
     });
     const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
 
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -40,6 +42,7 @@ const CreateTask = () => {
                 priority: "",
                 status: "",
             });
+            navigate('/tasks')
         } catch (err) {
             toast.error("Failed to create task");
         } finally {

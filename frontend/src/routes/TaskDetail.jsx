@@ -7,11 +7,12 @@ import {
     CiCircleCheck, CiClock1, CiEdit
 } from "react-icons/ci";
 import { BiSolidEdit } from "react-icons/bi";
+import { RiDeleteBin6Fill } from "react-icons/ri";
 
 import Spinner from "../components/Spinner";
 import FormInput from "../components/FormInput";
 import FormSelect from "../components/FormSelect";
-import { getTask, updateTask } from "../api/apiEndpoints";
+import { getTask, updateTask, deleteTask } from "../api/apiEndpoints";
 
 import { TASK_STATUS } from "../constants/taskUI";
 
@@ -36,6 +37,11 @@ const TaskDetail = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    
+    // State for Delete Modal
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    
     const originalTaskRef = useRef(null);
 
     useEffect(() => {
@@ -107,6 +113,20 @@ const TaskDetail = () => {
         }
     }, [id, task]);
 
+    const handleDelete = useCallback(async () => {
+        try {
+            setIsDeleting(true);
+            await deleteTask(id);
+            toast.success("Task deleted successfully");
+            navigate("/tasks");
+        } catch (error) {
+            toast.error("Failed to delete task");
+        } finally {
+            setIsDeleting(false);
+            setShowDeleteModal(false);
+        }
+    }, [id, navigate]);
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-screen">
@@ -133,15 +153,26 @@ const TaskDetail = () => {
                         ← Back
                     </button>
 
-                    {!isEditing && (
-                        <button
-                             onClick={() => setIsEditing(true)}
-                            className='p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition'
-                            title='Edit task'
-                        >
-                            <BiSolidEdit size={22} />
-                        </button>
-                    )}
+                    <div className="flex justify-end gap-2">
+                        {!isEditing && (
+                            <button
+                                onClick={() => setIsEditing(true)}
+                                className='p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition'
+                                title='Edit task'
+                            >
+                                <BiSolidEdit size={22} />
+                            </button>
+                        )}
+                        {!isEditing && (
+                            <button
+                                onClick={() => setShowDeleteModal(true)} // Trigger Modal
+                                className='p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition'
+                                title='Delete task'
+                            >
+                                <RiDeleteBin6Fill size={22} />
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
@@ -294,29 +325,62 @@ const TaskDetail = () => {
                                 { label: "Completed", value: "completed" },
                             ]}
                         />
-                        <div className="flex items-center gap-4">
-                            <div className="ml-auto flex gap-3">
+                        <div className="flex items-center pt-6 mt-6 border-t border-gray-100 dark:border-gray-700">
+                            <div className="ml-auto flex items-center gap-3">
                                 <button
                                     type="button"
                                     onClick={() => setIsEditing(false)}
-                                    className="py-2 text-white hover:bg-gray-900 disabled:opacity-60 border rounded-md flex justify-center items-center"
+                                    className="px-6 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all active:scale-95 border border-gray-200 dark:border-gray-600"
                                 >
                                     Cancel
                                 </button>
-
                                 <button
                                     type="submit"
                                     disabled={saving}
-                                    className="bg-blue-500 hover:bg-blue-600 disabled:opacity-60 rounded-md px-4 py-2 mt-2 flex justify-center items-center gap-2"
+                                    className="px-6 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all active:scale-95 shadow-md shadow-blue-500/20 flex items-center gap-2"
                                 >
-                                    {saving && <Spinner />}
-                                    {saving ? "Saving..." : "Save Changes"}
+                                    {saving ? (
+                                        <>
+                                            <Spinner size="sm" />
+                                            <span>Saving...</span>
+                                        </>
+                                    ) : (
+                                        "Save Changes"
+                                    )}
                                 </button>
                             </div>
                         </div>
+                        
                     </form>
                 )}
             </div>
+            {/* DELETE CONFIRMATION MODAL */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-sm w-full p-6 shadow-xl border border-gray-200 dark:border-gray-700">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Delete Task</h3>
+                        <p className="mt-2 text-gray-600 dark:text-gray-400">
+                            Are you sure you want to delete <span className="font-semibold text-gray-900 dark:text-white">"{task.title}"</span>? This action cannot be undone.
+                        </p>
+
+                        <div className="mt-6 flex gap-3">
+                            <button
+                                onClick={() => setShowDeleteModal(false)}
+                                className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                disabled={isDeleting}
+                                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                {isDeleting ? <Spinner /> : "Delete"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
