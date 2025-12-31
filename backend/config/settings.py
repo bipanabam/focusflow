@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     # local apps
     'apps.accounts',
     'apps.tasks',
+    'apps.pomodoro',
 ]
 INSTALLED_APPS += ["rest_framework_simplejwt.token_blacklist"]
 
