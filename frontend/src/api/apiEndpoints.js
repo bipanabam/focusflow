@@ -76,3 +76,8 @@ export const deleteTask = async (id) => {
     const response = await API.delete(`/tasks/${id}/`);
     return response.data;
 }
+
+export const getFilteredTasks = async (filters) => {
+    const response = await API.get(`/tasks/`, { params: filters });
+    return response.data;
+};

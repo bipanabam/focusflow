@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-import { CiEdit } from "react-icons/ci";
+import { BiSolidEdit } from "react-icons/bi";
 
 const TaskCard = ({ task }) => {
     const categoryColors = {
@@ -58,7 +58,7 @@ const TaskCard = ({ task }) => {
                     className='p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition'
                     title='Edit task'
                 >
-                    <CiEdit size='22px' />
+                    <BiSolidEdit size='20px' />
                 </button>
                 <button className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition">
                     Start →
