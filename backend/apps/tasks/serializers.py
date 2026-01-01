@@ -23,4 +23,14 @@ class TaskSerializer(serializers.ModelSerializer):
         task = Task.objects.create(**validated_data)
         task.save()
         return task
+    
+class TaskStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Task
+        fields = (
+            'id', 'title', 'status',
+            'started_at', 'ended_at',
+            'total_focus_seconds',
+            'estimated_pomodoros'
+        )
         

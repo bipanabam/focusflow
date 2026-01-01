@@ -10,6 +10,9 @@ class PomodoroSession(models.Model):
     started_at = models.DateTimeField()
     ended_at = models.DateTimeField(null=True, blank=True)
     
+    paused_at = models.DateTimeField(null=True, blank=True)
+    resumed_at = models.DateTimeField(null=True, blank=True)
+    
     duration_minutes = models.IntegerField(default=25)
     actual_duration_seconds = models.IntegerField(null=True, blank=True)
     
