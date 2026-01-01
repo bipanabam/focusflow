@@ -13,7 +13,7 @@ from apps.pomodoro.serializers import PomodoroSessionSerializer
 
 # Create your views here.
 class TaskViewSet(viewsets.ModelViewSet):
-    queryset = Task.objects.all().order_by('-created_at')
+    queryset = Task.objects.all().order_by('created_at')
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
     filterset_class = TaskFilter

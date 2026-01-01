@@ -49,6 +49,11 @@ export const getTodaysTask = async (num, today) => {
     return response.data
 }
 
+export const getTodaysUncompletedTask = async (num, today) => {
+    const response = await API.get(`/tasks/?page=${num}&created_at=${today}&status=pending`);
+    return response.data
+}
+
 export const createTask = async (title, description, category, priority, status) => {
     const response = await API.post('/tasks/',
         {

@@ -47,12 +47,12 @@ class Task(models.Model):
     
     class Meta:
         db_table = 'tasks'
-        ordering = ['-created_at']
+        ordering = ['created_at']
         indexes = [
             models.Index(fields=['owner', 'status']),
             # models.Index(fields=['organization', 'started_at']),
         ]
-        ordering = ['-created_at']
+        ordering = ['created_at']
 
     def __str__(self):
         return self.title

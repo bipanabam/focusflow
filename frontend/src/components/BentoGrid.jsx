@@ -11,54 +11,58 @@ import WeeklyOverview from "./WeeklyOverview";
 import QuickActions from "./QuickActions";
 import Spinner from "./Spinner";
 
-import {getTodaysTask} from "../api/apiEndpoints";
+import { getTodaysUncompletedTask } from "../api/apiEndpoints";
 
 const BentoGrid = () => {
-    const [pinnedTasks, setPinnedTasks] = useState([]);
-    const [paginatedTasks, setPaginatedTasks] = useState([]);
-    const [nextPage, setNextPage] = useState(1);
-    const [currentPage, setCurrentPage] = useState(1);
+    const [todaysTasks, setTodaysTasks] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchPinnedTasks = async () => {
+    const fetchTodaysTaskData = async () => {
         const todayStr = new Date().toISOString().split('T')[0];
-        const data = await getTodaysTask(1, todayStr);
-        setPinnedTasks(data.results || data);
+        const data = await getTodaysUncompletedTask(1, todayStr);
+        setTodaysTasks(data.results || data);
     };
 
-    const fetchTodaysTaskData = async (page) => {
-        const todayStr = new Date().toISOString().split('T')[0];
-        const data = await getTodaysTask(page, todayStr);
-        setPaginatedTasks(data.results || data);
-        setNextPage(data.next ? page + 1 : null);
-    };
+    // const fetchTodaysTaskData = async (page) => {
+    //     const todayStr = new Date().toISOString().split('T')[0];
+    //     const data = await getTodaysTask(page, todayStr);
+    //     setPaginatedTasks(data.results || data);
+    //     setNextPage(data.next ? page + 1 : null);
+    // };
 
     // Fetch pinned tasks ONCE
     useEffect(() => {
-        fetchPinnedTasks();
+        try {
+                fetchTodaysTaskData()
+            } catch {
+                console.log("No tasks for today.")
+            } finally {
+                setLoading(false)
+            }
+        fetchTodaysTaskData();
     }, []);
 
-    useEffect (() => {
-        try {
-            fetchTodaysTaskData(currentPage)
-        } catch {
-            alert('error getting posts')
-        } finally {
-            setLoading(false)
-        }
-    }, [currentPage])
+    // useEffect (() => {
+    //     try {
+    //         fetchTodaysTaskData(currentPage)
+    //     } catch {
+    //         alert('error getting posts')
+    //     } finally {
+    //         setLoading(false)
+    //     }
+    // }, [currentPage])
 
-    const loadMoreTasks = () => {
-        if (nextPage) {
-            setCurrentPage((prev) => prev + 1);
-        }
-    };
+    // const loadMoreTasks = () => {
+    //     if (nextPage) {
+    //         setCurrentPage((prev) => prev + 1);
+    //     }
+    // };
 
-    const loadPreviousTasks = () => {
-        if (currentPage > 1) {
-            setCurrentPage((prev) => prev - 1);
-        }
-    };
+    // const loadPreviousTasks = () => {
+    //     if (currentPage > 1) {
+    //         setCurrentPage((prev) => prev - 1);
+    //     }
+    // };
 
     if (loading) {
         return (
@@ -82,14 +86,14 @@ const BentoGrid = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Current Task Timer */}
                         <div className="lg:col-span-1 lg:row-span-2">
-                            <CurrentTaskTimer task={pinnedTasks[0]} />
+                            <CurrentTaskTimer task={todaysTasks[0]} />
                         </div>
 
                         {/* Right Column */}
                         <div className="lg:col-span-2 space-y-6">
                             {/* Next Up & Streaks */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <NextUpTasks tasks={pinnedTasks.slice(1, 3)} />
+                                <NextUpTasks tasks={todaysTasks.slice(1, )} />
                                 <StreaksAndBadges />
                             </div>
                         </div>
