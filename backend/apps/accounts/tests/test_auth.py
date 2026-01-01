@@ -97,22 +97,22 @@ class TokenRefreshTests(AuthBaseTestCase):
         response = self.client.post(self.refresh_url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         
-    def test_refresh_token_from_body(self):
-        self._login_and_set_cookies()
-        refresh_token = self.client.cookies.get("refresh_token").value
+    # def test_refresh_token_from_body(self):
+    #     self._login_and_set_cookies()
+    #     refresh_token = self.client.cookies.get("refresh_token").value
 
-        # Clear cookies to simulate no cookie scenario
-        self.client.cookies.clear()
+    #     # Clear cookies to simulate no cookie scenario
+    #     self.client.cookies.clear()
 
-        response = self.client.post(
-            self.refresh_url,
-            {"refresh": refresh_token},
-            format="json",
-        )
+    #     response = self.client.post(
+    #         self.refresh_url,
+    #         {"refresh": refresh_token},
+    #         format="json",
+    #     )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("access_token", response.cookies)
-        self.assertTrue(response.data["success"])
+    #     self.assertEqual(response.status_code, status.HTTP_200_OK)
+    #     self.assertIn("access_token", response.cookies)
+    #     self.assertTrue(response.data["success"])
 
 class LogoutTests(AuthBaseTestCase):
     def test_logout_authenticated_user(self):

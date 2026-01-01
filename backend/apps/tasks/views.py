@@ -40,3 +40,45 @@ class StartTaskAPIView(APIView):
             "task": TaskStatusSerializer(task).data,
             "pomodoro_session": PomodoroSessionSerializer(session).data
         })
+        
+class PauseTaskAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        task = Task.objects.get(pk=pk, owner=request.user)
+        session = TaskService.pause_task(task, request.user)
+
+        return Response({
+            "id": task.id,
+            "status": task.status,
+            "paused_at": session.paused_at
+        })
+
+class ResumeTaskAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        task = Task.objects.get(pk=pk, owner=request.user)
+        session = TaskService.resume_task(task, request.user)
+
+        return Response({
+            "id": task.id,
+            "status": task.status,
+            "resumed_at": session.resumed_at,
+        })
+
+class CompleteTaskAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        task = Task.objects.get(pk=pk, owner=request.user)
+        task = TaskService.complete_task(task, request.user)
+
+        completed_pomodoros = task.pomodoro_sessions.filter(
+            completed=True, is_break=False
+        ).count()
+
+        return Response({
+            **TaskStatusSerializer(task).data,
+            "completed_pomodoros": completed_pomodoros
+        })

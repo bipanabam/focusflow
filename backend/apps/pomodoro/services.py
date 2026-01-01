@@ -1,46 +1,59 @@
 from django.utils import timezone
-from datetime import timedelta
-
+from django.core.exceptions import ValidationError
 from apps.pomodoro.models import PomodoroSession
 
 class PomodoroService:
+
     @staticmethod
-    def start_session(task, user, duration_minutes=25):
-        """Create and start a new Pomodoro session"""
+    def get_active_session(user):
+        return PomodoroSession.objects.filter(
+            user=user,
+            completed=False
+        ).first()
+
+    @staticmethod
+    def start_focus(task, user, duration_minutes=25):
+        if PomodoroService.get_active_session(user):
+            raise ValidationError("Active session already exists")
+
         session = PomodoroSession.objects.create(
             task=task,
             user=user,
             started_at=timezone.now(),
-            duration_minutes=duration_minutes
+            duration_minutes=duration_minutes,
+            is_break=False
         )
-        
-        # Update task status
+
         task.status = 'in_progress'
-        if not task.started_at:
-            task.started_at = timezone.now()
-        task.save()
-        
+        task.started_at = task.started_at or timezone.now()
+        task.save(update_fields=['status', 'started_at'])
+
         return session
     
     @staticmethod
-    def complete_session(session_id):
-        """Mark session as completed and calculate duration"""
-        session = PomodoroSession.objects.get(id=session_id)
+    def start_break(user, break_type, duration_minutes):
+        if PomodoroService.get_active_session(user):
+            raise ValidationError("Active session already exists")
+
+        return PomodoroSession.objects.create(
+            user=user,
+            is_break=True,
+            break_type=break_type,
+            duration_minutes=duration_minutes,
+            started_at=timezone.now()
+        )
+
+
+    @staticmethod
+    def complete_session(session):
+        if session.completed:
+            raise ValidationError("Session already completed")
+
         session.ended_at = timezone.now()
         session.completed = True
-        
-        # Calculate actual duration
-        duration = (session.ended_at - session.started_at).total_seconds()
-        session.actual_duration_seconds = int(duration)
+        session.actual_duration_seconds = int(
+            (session.ended_at - session.started_at).total_seconds()
+        )
         session.save()
-        
+
         return session
-    
-    @staticmethod
-    def get_active_session(user):
-        """Get user's active session"""
-        return PomodoroSession.objects.filter(
-            user=user,
-            ended_at__isnull=True,
-            is_break=False
-        ).first()

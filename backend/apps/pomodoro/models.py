@@ -4,7 +4,7 @@ from apps.accounts.models import User
 
 # Create your models here.
 class PomodoroSession(models.Model):
-    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='pomodoro_sessions')
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='pomodoro_sessions', null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     
     started_at = models.DateTimeField()

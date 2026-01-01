@@ -86,3 +86,10 @@ export const getFilteredTasks = async (filters) => {
     const response = await API.get(`/tasks/`, { params: filters });
     return response.data;
 };
+
+// Task and Pomodoro Session
+export const startTask = async (id) => {
+    const response = await API.get(`/tasks/${id}/start/`);
+    console.log(response.data)
+    return response.data;
+}
