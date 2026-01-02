@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils import timezone
-from django.db.models import Sum, Q
+from django.db.models import Sum, F, Q, ExpressionWrapper, DurationField
 from datetime import timedelta
 from apps.tasks.models import Task
 from apps.accounts.models import User
@@ -42,14 +42,24 @@ class PomodoroSession(models.Model):
     
     @property
     def elapsed_seconds(self):
+        """
+        Total focused time in seconds (excluding pauses)
+        """
         end_time = self.ended_at or timezone.now()
-        total = int((end_time - self.started_at).total_seconds())
 
-        pause_seconds = sum(
-            p.duration_seconds for p in self.pauses.all()
-        )
+        total_seconds = (end_time - self.started_at).total_seconds()
 
-        return max(0, total - pause_seconds)
+        paused = self.pauses.filter(resumed_at__isnull=False).aggregate(
+            total=Sum(
+                ExpressionWrapper(
+                    F("resumed_at") - F("paused_at"),
+                    output_field=DurationField(),
+                )
+            )
+        )["total"]
+
+        paused_seconds = paused.total_seconds() if paused else 0
+        return max(0, int(total_seconds - paused_seconds))
 
     @property
     def remaining_seconds(self):

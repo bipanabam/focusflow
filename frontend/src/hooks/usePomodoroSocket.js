@@ -1,48 +1,22 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
+import { usePomodoroSocketContext } from "../contexts/PomodoroSocketContext";
 
-export function usePomodoroSocket(handlers) {
-    const socketRef = useRef(null);
-    const handlersRef = useRef(handlers);
-
-    // Update ref whenever handlers change
-    useEffect(() => {
-        handlersRef.current = handlers;
-    }, [handlers]);
+export function usePomodoroSocket(onSessionUpdate) {
+    const socketRef = usePomodoroSocketContext();
 
     useEffect(() => {
-        const ws = new WebSocket("ws://localhost:8000/ws/pomodoro/");
-        socketRef.current = ws;
+        if (!socketRef?.current) return;
 
-        ws.onopen = () => {
-            console.log("WS connected - waiting for initial state...");
-        };
+        const ws = socketRef.current;
 
-        ws.onmessage = (e) => {
+        const handleMessage = (e) => {
             const data = JSON.parse(e.data);
-            console.log("WS EVENT:", data);
-
-            const handler = handlersRef.current[data.type];
-            if (handler) {
-                handler(data);
-            } else {
-                console.warn("No handler for event type:", data.type);
+            if (data.type === "SESSION_UPDATE") {
+                onSessionUpdate(data);
             }
         };
 
-        ws.onerror = (error) => {
-            console.error("WS error:", error);
-        };
-
-        ws.onclose = () => {
-            console.log("WS disconnected");
-        };
-
-        return () => {
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.close();
-            }
-        };
-    }, []);
-
-    return socketRef;
+        ws.addEventListener("message", handleMessage);
+        return () => ws.removeEventListener("message", handleMessage);
+    }, [onSessionUpdate, socketRef]);
 }

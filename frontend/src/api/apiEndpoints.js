@@ -102,3 +102,9 @@ export const resumeTask = (id) =>
 
 export const completeTask = (id) => 
     API.post(`/tasks/${id}/complete/`);
+
+export const getActiveSession = async (id) => {
+    const response = await API.get(`/pomodoro/active-session/${id}`);
+    console.log(response.data)
+    return response.data;
+}

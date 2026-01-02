@@ -3,18 +3,54 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
-from apps.pomodoro.models import PomodoroSession
+from django.db.models import F, Sum, ExpressionWrapper, DurationField
+from apps.tasks.models import Task
 from apps.pomodoro.serializers import PomodoroSessionSerializer
+from apps.pomodoro.models import PomodoroSession
 from apps.pomodoro.services import PomodoroService
 
 class ActiveSessionAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        session = PomodoroService.get_active_session(request.user)
+    def get(self, request, task_id=None):
+        """
+        Return active session for the user, optionally filtered by task.
+        """
+        try:
+            if task_id:
+                task = Task.objects.get(pk=task_id, owner=request.user)
+                session = PomodoroService.get_active_session(user=request.user, task=task)
+            else:
+                session = PomodoroService.get_active_session(user=request.user)
+        except Task.DoesNotExist:
+            return Response({"detail": "Task not found"}, status=status.HTTP_404_NOT_FOUND)
+
         if not session:
-            return Response(status=404)
-        return Response(PomodoroSessionSerializer(session).data)
+            return Response({"active": False}, status=status.HTTP_200_OK)
+
+        # Calculate paused duration
+        paused = session.pauses.filter(resumed_at__isnull=False).aggregate(
+            total=Sum(
+                ExpressionWrapper(F("resumed_at") - F("paused_at"), output_field=DurationField())
+            )
+        )["total"]
+        paused_seconds = paused.total_seconds() if paused else 0
+
+        # Prepare the response dict
+        data = {
+            "id": session.id,
+            "task_id": session.task.id if session.task else None,
+            "started_at": session.started_at,
+            "ended_at": session.ended_at,
+            "is_running": not session.pauses.filter(resumed_at__isnull=True).exists() and not session.completed,
+            "completed": session.completed,
+            "duration_minutes": session.duration_minutes,
+            "total_duration_seconds": session.duration_minutes * 60,
+            "paused_seconds": paused_seconds,
+        }
+
+        return Response(data, status=status.HTTP_200_OK)
+
 
 class CompleteSessionAPIView(APIView):
     permission_classes = [IsAuthenticated]

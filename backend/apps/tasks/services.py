@@ -26,39 +26,30 @@ class TaskService:
     @transaction.atomic
     def start_task(task, user, duration_minutes):
         session = TaskService.get_active_session(task, user)
+        active_session = (
+            PomodoroSession.objects
+            .select_for_update()
+            .filter(user=user, completed=False, is_break=False)
+            .first()
+        )
+        if active_session:
+            broadcast_task_event(user.id, active_session)
+            return task, active_session
         if session:
             return task, session
         
-        try:
-            session = PomodoroSession.objects.create(
-                task=task,
-                user=user,
-                started_at=timezone.now(),
-                duration_minutes=duration_minutes
-            )
-        except IntegrityError:
-            session = PomodoroSession.objects.get(
+        session = PomodoroSession.objects.create(
+            task=task,
             user=user,
-            completed=False,
-            is_break=False
-            )
-            broadcast_task_event(
-                user_id=user.id,
-                event_type="ACTIVE_POMODORO_EXISTS",
-                session=session
-            )
-            raise ActivePomodoroExists(session)
+            started_at=timezone.now(),
+            duration_minutes=duration_minutes
+        )
 
         task.status = 'in_progress'
         task.started_at = task.started_at or timezone.now()
         task.save(update_fields=['status', 'started_at'])
         
-        broadcast_task_event(
-            user_id=user.id,
-            event_type="TASK_STARTED",
-            session=session,
-        )
-
+        broadcast_task_event(user.id, session)
         return task, session
 
     @transaction.atomic
@@ -79,11 +70,7 @@ class TaskService:
         task.status = "paused"
         task.save(update_fields=["status"])
         
-        broadcast_task_event(
-            user_id=user.id,
-            event_type="TASK_PAUSED",
-            session=session
-        )
+        broadcast_task_event(user.id, session)
 
         return task, session
     
@@ -101,12 +88,7 @@ class TaskService:
         task.status = "in_progress"
         task.save(update_fields=["status"])
         
-         
-        broadcast_task_event(
-            user_id=user.id,
-            event_type="TASK_RESUMED",
-            session=session
-        )
+        broadcast_task_event(user.id, session)
 
         return task, session
 
@@ -183,10 +165,5 @@ class TaskService:
         task.total_focus_seconds = totals["total"] or 0
         task.save(update_fields=["status", "ended_at", "total_focus_seconds"])
 
-        broadcast_task_event(
-            user_id=user.id,
-            event_type="SESSION_COMPLETED",
-            session=session
-        )
-
+        broadcast_task_event(user.id, session)
         return task

@@ -1,20 +1,24 @@
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from apps.pomodoro.models import PomodoroSession
+from django.db.models import F, ExpressionWrapper, DurationField, Sum
+from apps.pomodoro.models import PomodoroSession, PomodoroPause
 
 class PomodoroService:
 
     @staticmethod
-    def get_active_session(user):
-        return PomodoroSession.objects.filter(
-            user=user,
-            completed=False
-        ).first()
+    def get_active_session(user, task=None):
+        """
+        Return the active session for a user, optionally for a specific task.
+        """
+        qs = PomodoroSession.objects.filter(user=user, completed=False)
+        if task:
+            qs = qs.filter(task=task)
+        return qs.first()
 
     @staticmethod
     def start_focus(task, user, duration_minutes=25):
-        if PomodoroService.get_active_session(user):
-            raise ValidationError("Active session already exists")
+        if PomodoroService.get_active_session(user, task):
+            raise ValidationError("Active session already exists for this task")
 
         session = PomodoroSession.objects.create(
             task=task,
@@ -43,7 +47,6 @@ class PomodoroService:
             started_at=timezone.now()
         )
 
-
     @staticmethod
     def complete_session(session):
         if session.completed:
@@ -51,8 +54,21 @@ class PomodoroService:
 
         session.ended_at = timezone.now()
         session.completed = True
+
+        # calculate elapsed seconds accounting for pauses
+        paused = session.pauses.filter(resumed_at__isnull=False).aggregate(
+            total=Sum(
+                ExpressionWrapper(
+                    F("resumed_at") - F("paused_at"),
+                    output_field=DurationField(),
+                )
+            )
+        )["total"]
+
+        paused_seconds = paused.total_seconds() if paused else 0
+
         session.actual_duration_seconds = int(
-            (session.ended_at - session.started_at).total_seconds()
+            (timezone.now() - session.started_at).total_seconds() - paused_seconds
         )
         session.save()
 
