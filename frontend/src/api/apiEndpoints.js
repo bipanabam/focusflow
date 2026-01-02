@@ -89,7 +89,16 @@ export const getFilteredTasks = async (filters) => {
 
 // Task and Pomodoro Session
 export const startTask = async (id) => {
-    const response = await API.get(`/tasks/${id}/start/`);
+    const response = await API.post(`/tasks/${id}/start/`);
     console.log(response.data)
     return response.data;
 }
+
+export const pauseTask = (id) =>
+    API.post(`/tasks/${id}/pause/`);
+
+export const resumeTask = (id) =>
+    API.post(`/tasks/${id}/resume/`);
+
+export const completeTask = (id) => 
+    API.post(`/tasks/${id}/complete/`);

@@ -2,19 +2,20 @@
 from rest_framework import serializers
 from django.utils import timezone
 from apps.pomodoro.models import PomodoroSession
-
 class PomodoroSessionSerializer(serializers.ModelSerializer):
-    elapsed_seconds = serializers.SerializerMethodField()
+    ends_at = serializers.DateTimeField(read_only=True)
+    elapsed_seconds = serializers.IntegerField(read_only=True)
+    remaining_seconds = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = PomodoroSession
-        fields = (
-            'id', 'task', 'started_at', 'ended_at',
-            'duration_minutes', 'actual_duration_seconds',
-            'is_break', 'completed',
-            'elapsed_seconds'
-        )
-
-    def get_elapsed_seconds(self, obj):
-        end = obj.ended_at or timezone.now()
-        return int((end - obj.started_at).total_seconds())
+        fields = [
+            "id",
+            "started_at",
+            "ends_at",
+            "duration_minutes",
+            "is_break",
+            "elapsed_seconds",
+            "remaining_seconds",
+            "completed",
+        ]

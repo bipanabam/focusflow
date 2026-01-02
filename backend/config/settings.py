@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_filters',
     'drf_spectacular',
+    'channels',
     # local apps
     'apps.accounts',
     'apps.tasks',
@@ -78,7 +79,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'config.wsgi.application'
+# WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION = "config.asgi.application"
 
 
 # Database
@@ -171,3 +173,9 @@ AUTH_COOKIE_SECURE = False  #SSL Connection
 AUTH_COOKIE_HTTP_ONLY = True #Flag: So that javascript cannot access the values in the browser
 AUTH_COOKIE_PATH = '/'
 AUTH_COOKIE_SAMESITE = 'Lax' #None, Lax, Strict - Use 'Lax' for development (HTTP), 'None' requires HTTPS
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    }
+}

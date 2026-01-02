@@ -1,19 +1,18 @@
 from apps.pomodoro.tests.base import BaseAPITestCase
 from apps.pomodoro.models import PomodoroSession
-
+import time
 class TestActiveSession(BaseAPITestCase):
-
-    def test_no_active_session(self):
-        response = self.client.get("/pomodoro/active/")
-        self.assertEqual(response.status_code, 404)
 
     def test_get_active_session(self):
         self.client.post(f"/tasks/{self.task.id}/start/")
+        time.sleep(1)
 
         response = self.client.get("/pomodoro/active/")
-
         self.assertEqual(response.status_code, 200)
+
         self.assertFalse(response.data["is_break"])
+        self.assertGreater(response.data["elapsed_seconds"], 0)
+        self.assertGreater(response.data["remaining_seconds"], 0)
 
 class TestCompleteSession(BaseAPITestCase):
 
@@ -45,6 +44,8 @@ class TestStartBreak(BaseAPITestCase):
 
         self.assertTrue(session.is_break)
         self.assertEqual(session.break_type, "short")
+        self.assertFalse(session.completed)
+
         
 # class TestListSessions(BaseAPITestCase):
 

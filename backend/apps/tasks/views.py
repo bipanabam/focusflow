@@ -1,13 +1,16 @@
 from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
+from django.utils import timezone
 
 from apps.tasks.models import Task
 from apps.tasks.serializers import TaskSerializer, TaskStatusSerializer
 from apps.tasks.services import TaskService
 from apps.tasks.filters import TaskFilter
+from apps.tasks.services import ActivePomodoroExists
 
 from apps.pomodoro.serializers import PomodoroSessionSerializer
 
@@ -24,49 +27,71 @@ class TaskViewSet(viewsets.ModelViewSet):
         if not self.request.user.is_superuser:
             qs = qs.filter(owner=self.request.user)
         return qs
-    
-
+   
 class StartTaskAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
         task = Task.objects.get(pk=pk, owner=request.user)
-        duration = request.data.get('pomodoro_duration', 25)
-        print(duration)
-
-        session = TaskService.start_task(task, request.user, duration)
+        duration = int(request.data.get("pomodoro_duration", 25))
+        
+        try:
+            task, session = TaskService.start_task(
+                task,
+                request.user,
+                request.data.get("pomodoro_duration", 25)
+            )
+        except ActivePomodoroExists as e:
+            return Response(
+                {
+                    "error": "ACTIVE_POMODORO_EXISTS",
+                    "message": "You already have an active pomodoro running.",
+                    "session_id": e.session.id,
+                    "task_id": e.session.task_id
+                },
+                status=status.HTTP_409_CONFLICT
+            )
 
         return Response({
             "task": TaskStatusSerializer(task).data,
             "pomodoro_session": PomodoroSessionSerializer(session).data
-        })
-        
+        },
+        status=status.HTTP_201_CREATED) 
+          
 class PauseTaskAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
         task = Task.objects.get(pk=pk, owner=request.user)
-        session = TaskService.pause_task(task, request.user)
+        task, session = TaskService.pause_task(task, request.user)
 
         return Response({
             "id": task.id,
             "status": task.status,
-            "paused_at": session.paused_at
+            "paused_at": session.paused_at,
+            "active_session": {
+                "id": session.id,
+                "paused_duration": session.elapsed_seconds
+            }
         })
-
+        
 class ResumeTaskAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
         task = Task.objects.get(pk=pk, owner=request.user)
-        session = TaskService.resume_task(task, request.user)
+        task, session = TaskService.resume_task(task, request.user)
 
         return Response({
             "id": task.id,
             "status": task.status,
-            "resumed_at": session.resumed_at,
+            "resumed_at": timezone.now(),
+            "active_session": {
+                "id": session.id,
+                "remaining_seconds": session.remaining_seconds
+            }
         })
-
+       
 class CompleteTaskAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
