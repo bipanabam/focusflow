@@ -12,13 +12,21 @@ const computeRemainingSeconds = ({ started_at, total_duration_seconds, paused_se
     return Math.max(total_duration_seconds - elapsed - paused_seconds, 0);
 };
 
-const CurrentTaskTimer = ({ task }) => {
+const CurrentTaskTimer = ({ task, session }) => {
     const SESSION_STATES = {
         IDLE: "idle",
         RUNNING: "running",
         PAUSED: "paused",
         COMPLETED: "completed",
     };
+    console.log(task)
+    console.log(session)
+    // Determine initial time
+    const initialTime = session
+        ? session.total_duration_seconds - (session.paused_seconds || 0)
+        : task?.estimated_pomodoros
+            ? task.estimated_pomodoros * 25 * 60
+            : DEFAULT_DURATION;
 
     const [sessionState, setSessionState] = useState(SESSION_STATES.IDLE);
     const [timeLeft, setTimeLeft] = useState(DEFAULT_DURATION);
@@ -58,19 +66,29 @@ const CurrentTaskTimer = ({ task }) => {
     }, [sessionState, timeLeft, task?.id]);
 
     // Fetch active session on mount / task change
+    // useEffect(() => {
+    //     if (!task?.id) return;
+
+    //     (async () => {
+    //         const data = await getActiveSession(task.id);
+    //         if (!data.active) return;
+
+    //         const remaining = computeRemainingSeconds(data);
+    //         setTimeLeft(remaining);
+    //         setTotalDuration(data.total_duration_seconds);
+    //         setSessionState(data.is_running ? SESSION_STATES.RUNNING : SESSION_STATES.PAUSED);
+    //     })();
+    // }, [task?.id]);
     useEffect(() => {
-        if (!task?.id) return;
+        if (!session) return;
 
-        (async () => {
-            const data = await getActiveSession(task.id);
-            if (!data.active) return;
+        const remaining = computeRemainingSeconds(session);
 
-            const remaining = computeRemainingSeconds(data);
-            setTimeLeft(remaining);
-            setTotalDuration(data.total_duration_seconds);
-            setSessionState(data.is_running ? SESSION_STATES.RUNNING : SESSION_STATES.PAUSED);
-        })();
-    }, [task?.id]);
+        setTimeLeft(remaining);
+        setTotalDuration(session.total_duration_seconds);
+        setSessionState(session.is_running ? SESSION_STATES.RUNNING : SESSION_STATES.PAUSED);
+    }, [session]);
+
 
     // WebSocket updates
     usePomodoroSocket((data) => {

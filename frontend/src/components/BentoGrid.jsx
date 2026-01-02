@@ -11,58 +11,48 @@ import WeeklyOverview from "./WeeklyOverview";
 import QuickActions from "./QuickActions";
 import Spinner from "./Spinner";
 
-import { getTodaysUncompletedTask } from "../api/apiEndpoints";
+import { getTodaysUncompletedTask, getActiveSession, getTask } from "../api/apiEndpoints";
 
 const BentoGrid = () => {
     const [todaysTasks, setTodaysTasks] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [activeSession, setActiveSession] = useState(null);
 
-    const fetchTodaysTaskData = async () => {
-        const todayStr = new Date().toISOString().split('T')[0];
-        const data = await getTodaysUncompletedTask(1, todayStr);
-        setTodaysTasks(data.results || data);
-    };
-
-    // const fetchTodaysTaskData = async (page) => {
-    //     const todayStr = new Date().toISOString().split('T')[0];
-    //     const data = await getTodaysTask(page, todayStr);
-    //     setPaginatedTasks(data.results || data);
-    //     setNextPage(data.next ? page + 1 : null);
-    // };
-
-    // Fetch pinned tasks ONCE
     useEffect(() => {
-        try {
-                fetchTodaysTaskData()
-            } catch {
-                console.log("No tasks for today.")
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                const todayStr = new Date().toISOString().split("T")[0];
+
+                // fetch pending tasks
+                const tasksData = await getTodaysUncompletedTask(1, todayStr);
+                const tasks = tasksData.results || tasksData;
+
+                //fetch active session
+                const session = await getActiveSession();
+                let activeSessionData = null;
+                if (session.is_running) {
+                    // fetch full task for active session
+                    const activeTask = await getTask(session.task_id);
+                    activeSessionData = { session, task: activeTask };
+                }
+
+                // filter out active task from next up tasks
+                const nextUpTasks = activeSessionData
+                    ? tasks.filter(t => t.id !== activeSessionData.task.id)
+                    : tasks;
+
+                setTodaysTasks(nextUpTasks);
+                setActiveSession(activeSessionData);
+            } catch (err) {
+                console.error(err);
             } finally {
-                setLoading(false)
+                setLoading(false);
             }
-        fetchTodaysTaskData();
+        };
+
+        fetchData();
     }, []);
-
-    // useEffect (() => {
-    //     try {
-    //         fetchTodaysTaskData(currentPage)
-    //     } catch {
-    //         alert('error getting posts')
-    //     } finally {
-    //         setLoading(false)
-    //     }
-    // }, [currentPage])
-
-    // const loadMoreTasks = () => {
-    //     if (nextPage) {
-    //         setCurrentPage((prev) => prev + 1);
-    //     }
-    // };
-
-    // const loadPreviousTasks = () => {
-    //     if (currentPage > 1) {
-    //         setCurrentPage((prev) => prev - 1);
-    //     }
-    // };
 
     if (loading) {
         return (
@@ -86,7 +76,10 @@ const BentoGrid = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Current Task Timer */}
                         <div className="lg:col-span-1 lg:row-span-2">
-                            <CurrentTaskTimer task={todaysTasks[0]} />
+                            <CurrentTaskTimer
+                                session={activeSession?.session}
+                                task={activeSession?.task || todaysTasks[0]}
+                            />
                         </div>
 
                         {/* Right Column */}
