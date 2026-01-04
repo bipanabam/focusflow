@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { IoMdAddCircleOutline, IoMdSettings } from 'react-icons/io';
 import { IoPersonOutline, IoSearch, IoNotifications } from 'react-icons/io5';
+import { GoTasklist } from "react-icons/go";
 import { FaHouse } from 'react-icons/fa6';
 import { MdLogout } from 'react-icons/md';
 
@@ -69,6 +70,14 @@ const Navbar = () => {
                             title='Add new task'
                         >
                             <IoMdAddCircleOutline size='22px' />
+                        </button>
+                        {/* Tasks */}
+                        <button
+                            onClick={() => navigate('/tasks')}
+                            className='p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition'
+                            title='View tasks'
+                        >
+                            <GoTasklist size='22px' />
                         </button>
 
                         {/* Search Mobile */}

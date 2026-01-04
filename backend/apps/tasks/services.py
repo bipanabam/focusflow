@@ -1,11 +1,14 @@
 from django.utils import timezone
 from django.db import transaction
 from django.db.models import Sum, Count
+from django.core.exceptions import ValidationError
 
 from apps.tasks.models import Task
-from apps.pomodoro.models import PomodoroSession, PomodoroPause
-from apps.pomodoro.utils import broadcast_task_event
 
+from apps.pomodoro.models import PomodoroSession, PomodoroPause
+from apps.pomodoro.utils import broadcast_task_event, derive_session_state
+from apps.pomodoro.services import PomodoroService
+from apps.pomodoro.fsm import PomodoroFSM
 class ActivePomodoroExists(Exception):
     def __init__(self, session):
         self.session = session
@@ -54,12 +57,10 @@ class TaskService:
     @transaction.atomic
     def pause_task(task, user):
         session = TaskService.get_active_session(task, user)
-
-        if not session:
-            raise ValueError("No running session")
+        state = derive_session_state(session)
         
-        if session.pauses.filter(resumed_at__isnull=True).exists():
-            return task, session
+        if not PomodoroFSM.can_transition(state, "PAUSE"):
+            raise ValidationError("Cannot pause in current state")
 
         PomodoroPause.objects.create(
             session=session,
@@ -70,12 +71,14 @@ class TaskService:
         task.save(update_fields=["status"])
         
         broadcast_task_event(user.id, session)
-
         return task, session
     
     @transaction.atomic
     def resume_task(task, user):
         session = TaskService.get_active_session(task, user)
+        state = derive_session_state(session)
+        if not PomodoroFSM.can_transition(state, "RESUME"):
+            raise ValidationError("Cannot resume")
 
         pause = session.pauses.filter(resumed_at__isnull=True).last()
         if not pause:
@@ -90,68 +93,16 @@ class TaskService:
         broadcast_task_event(user.id, session)
 
         return task, session
-
-    
-    # @transaction.atomic
-    # def complete_task(task, user):
-    #     session = TaskService.get_active_session(task, user)
-    #     if not session:
-    #         raise ValueError("No active session")
-
-    #     now = timezone.now()
-
-    #     # If user completes while paused, close the pause
-    #     if session.paused_at:
-    #         paused_seconds = int((now - session.paused_at).total_seconds())
-    #         session.paused_duration_seconds += paused_seconds
-    #         session.paused_at = None
-
-    #     session.completed = True
-    #     session.ended_at = now
-    #     session.actual_duration_seconds = session.elapsed_seconds
-    #     session.save()
-
-    #     totals = PomodoroSession.objects.filter(
-    #         task=task,
-    #         completed=True,
-    #         is_break=False
-    #     ).aggregate(
-    #         total_focus=Sum("actual_duration_seconds"),
-    #         completed_count=Count("id")
-    #     )
-
-    #     task.status = "completed"
-    #     task.ended_at = now
-    #     task.total_focus_seconds = totals["total_focus"] or 0
-    #     task.save()
-
-    #     broadcast_task_event(
-    #         user_id=user.id,
-    #         event_type="SESSION_COMPLETED",
-    #         session=session
-    #     )
-
-        # return task
     
     @transaction.atomic
     def complete_task(task, user):
         session = TaskService.get_active_session(task, user)
-
-        if not session or session.completed:
-            return task
-
         now = timezone.now()
+        state = derive_session_state(session)
+        if not PomodoroFSM.can_transition(state, "COMPLETE"):
+            raise ValidationError("Cannot complete")
 
-        # Close any ongoing pause
-        ongoing_pause = session.pauses.filter(resumed_at__isnull=True).last()
-        if ongoing_pause:
-            ongoing_pause.resumed_at = now
-            ongoing_pause.save(update_fields=["resumed_at"])
-
-        session.ended_at = now
-        session.completed = True
-        session.actual_duration_seconds = session.elapsed_seconds
-        session.save()
+        PomodoroService.complete_session(session, manual=True)
 
         totals = PomodoroSession.objects.filter(
             task=task,
@@ -164,5 +115,7 @@ class TaskService:
         task.total_focus_seconds = totals["total"] or 0
         task.save(update_fields=["status", "ended_at", "total_focus_seconds"])
 
-        broadcast_task_event(user.id, session)
+        # Broadcast with manual completion
+        broadcast_task_event(user.id, session, manual_completion=True)
+
         return task

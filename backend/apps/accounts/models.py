@@ -50,5 +50,14 @@ class User(AbstractUser):
 
     objects = CustomUserManager()
     
+    def get_pomodoro_setting(self, key):
+        return self.pomodoro_settings.get(
+            key,
+            DEFAULT_POMODORO_SETTINGS[key]
+        )
+    
+    def get_focus_duration_minutes(self):
+        return int(self.get_pomodoro_setting("focus_minutes"))
+    
     def __str__(self):
         return self.email

@@ -1,0 +1,21 @@
+export const FSM = {
+    IDLE: "IDLE",
+
+    FOCUS_RUNNING: "FOCUS_RUNNING",
+    FOCUS_PAUSED: "FOCUS_PAUSED",
+
+    BREAK_RUNNING: "BREAK_RUNNING",
+    BREAK_PAUSED: "BREAK_PAUSED",
+
+    TERMINATED: "TERMINATED",
+} as const;
+
+export const RUNNING_STATES = [
+    FSM.FOCUS_RUNNING,
+    FSM.BREAK_RUNNING,
+];
+
+export const PAUSED_STATES = [
+    FSM.FOCUS_PAUSED,
+    FSM.BREAK_PAUSED,
+];

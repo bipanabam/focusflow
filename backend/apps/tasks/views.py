@@ -33,13 +33,13 @@ class StartTaskAPIView(APIView):
 
     def post(self, request, pk):
         task = Task.objects.get(pk=pk, owner=request.user)
-        duration = int(request.data.get("pomodoro_duration", 25))
+        duration_minutes = request.user.get_focus_duration_minutes()
         
         try:
             task, session = TaskService.start_task(
                 task,
                 request.user,
-                request.data.get("pomodoro_duration", 25)
+                duration_minutes=duration_minutes,
             )
         except ActivePomodoroExists as e:
             return Response(

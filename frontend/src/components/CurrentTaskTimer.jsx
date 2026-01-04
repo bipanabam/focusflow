@@ -1,7 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { usePomodoroSocket } from "../hooks/usePomodoroSocket";
 import { IoPlayOutline, IoPauseCircle, IoStopCircle } from "react-icons/io5";
 import { startTask, resumeTask, pauseTask, completeTask, getActiveSession } from "../api/apiEndpoints";
+
+import { FSM, RUNNING_STATES, PAUSED_STATES } from "../constants/fsm";
+
 
 const DEFAULT_DURATION = 25 * 60; // 25 mins
 
@@ -13,31 +16,30 @@ const computeRemainingSeconds = ({ started_at, total_duration_seconds, paused_se
 };
 
 const CurrentTaskTimer = ({ task, session }) => {
-    const SESSION_STATES = {
-        IDLE: "idle",
-        RUNNING: "running",
-        PAUSED: "paused",
-        COMPLETED: "completed",
-    };
     console.log(task)
     console.log(session)
     // Determine initial time
     const initialTime = session
-        ? session.total_duration_seconds - (session.paused_seconds || 0)
-        : task?.estimated_pomodoros
-            ? task.estimated_pomodoros * 25 * 60
-            : DEFAULT_DURATION;
+        ? session.total_duration_seconds - session.paused_seconds
+        : task?.estimated_pomodoros * 25 * 60;
 
-    const [sessionState, setSessionState] = useState(SESSION_STATES.IDLE);
+    const [sessionState, setSessionState] = useState(FSM.IDLE);
     const [timeLeft, setTimeLeft] = useState(DEFAULT_DURATION);
     const [totalDuration, setTotalDuration] = useState(DEFAULT_DURATION);
     const [pending, setPending] = useState(false);
 
     const timerRef = useRef(null);
 
-    const isIdle = sessionState === SESSION_STATES.IDLE;
-    const isRunning = sessionState === SESSION_STATES.RUNNING;
-    const isPaused = sessionState === SESSION_STATES.PAUSED;
+    const isIdle = sessionState === FSM.IDLE;
+    const isTerminated = sessionState === FSM.TERMINATED;
+
+    const showEndButton = sessionState.startsWith("FOCUS");
+    const { isRunning, isPaused, isBreak } = useMemo(() => ({
+        isRunning: RUNNING_STATES.includes(sessionState),
+        isPaused: PAUSED_STATES.includes(sessionState),
+        isBreak: sessionState.startsWith("BREAK"),
+    }), [sessionState]);
+
 
     const trackEvent = (name, payload = {}) => {
         console.log(`[EVENT] ${name}`, payload);
@@ -47,7 +49,7 @@ const CurrentTaskTimer = ({ task, session }) => {
     useEffect(() => {
         if (!task?.id) return;
 
-        setSessionState(SESSION_STATES.IDLE);
+        setSessionState(FSM.IDLE);
         const initialTime = task?.estimated_pomodoros
             ? task.estimated_pomodoros * 25 * 60
             : DEFAULT_DURATION;
@@ -55,15 +57,25 @@ const CurrentTaskTimer = ({ task, session }) => {
         setTotalDuration(initialTime);
     }, [task?.id]);
 
-    // Track session state changes
+    // hydrate
     useEffect(() => {
         if (!task?.id) return;
-        trackEvent("pomodoro_state_changed", {
-            task_id: task.id,
-            state: sessionState,
-            remaining_seconds: timeLeft,
-        });
-    }, [sessionState, timeLeft, task?.id]);
+
+        (async () => {
+            const data = await getActiveSession(task.id);
+            if (!data?.fsm_state) return;
+
+            applySessionUpdate({
+                fsmState: data.fsm_state,
+                session: data,
+            });
+        })();
+    }, [task?.id]);
+
+    // Track session state changes
+    useEffect(() => {
+        trackEvent("pomodoro_state_changed", { state: sessionState });
+    }, [sessionState]);
 
     // Fetch active session on mount / task change
     // useEffect(() => {
@@ -79,31 +91,54 @@ const CurrentTaskTimer = ({ task, session }) => {
     //         setSessionState(data.is_running ? SESSION_STATES.RUNNING : SESSION_STATES.PAUSED);
     //     })();
     // }, [task?.id]);
-    useEffect(() => {
-        if (!session) return;
+    // useEffect(() => {
+    //     if (!session) return;
 
-        const remaining = computeRemainingSeconds(session);
+    //     const remaining = computeRemainingSeconds(session);
 
-        setTimeLeft(remaining);
-        setTotalDuration(session.total_duration_seconds);
-        setSessionState(session.is_running ? SESSION_STATES.RUNNING : SESSION_STATES.PAUSED);
-    }, [session]);
+    //     setTimeLeft(remaining);
+    //     setTotalDuration(session.total_duration_seconds);
+    //     setSessionState(session.is_running ? SESSION_STATES.RUNNING : SESSION_STATES.PAUSED);
+    // }, [session]);
 
+    // helper
+    const applySessionUpdate = ({ fsmState, session }) => {
+        setSessionState(fsmState);
 
-    // WebSocket updates
-    usePomodoroSocket((data) => {
-        if (data.task_id !== task?.id) return;
-
-        if (data.ended) {
-            setSessionState(SESSION_STATES.COMPLETED);
-            setTimeLeft(0);
-            return;
+        if (session?.remaining_seconds !== undefined) {
+            setTimeLeft(session.remaining_seconds);
+            setTotalDuration(session.total_duration_seconds);
         }
 
-        const remaining = computeRemainingSeconds(data);
-        setTimeLeft(remaining);
-        setTotalDuration(data.total_duration_seconds);
-        setSessionState(data.is_running ? SESSION_STATES.RUNNING : SESSION_STATES.PAUSED);
+        if (fsmState === FSM.TERMINATED) {
+            setTimeLeft(0);
+        }
+    };
+
+    // WebSocket updates
+    usePomodoroSocket((payload) => {
+        if (payload.session.task_id !== task?.id) return;
+        if (payload.ended || payload.fsm_state === "TERMINATED") {
+            setSessionState(FSM.TERMINATED);
+            setTimeLeft(0);
+            return; // Stop further updates
+        }
+        applySessionUpdate(payload);
+
+        // if (data.ended) {
+        //     setSessionState(SESSION_STATES.COMPLETED);
+        //     setTimeLeft(0);
+        //     return;
+        // }
+        // if (data.type === "FSM_TRANSITION") {
+        //     setSession(data.session);
+        //     setSessionState(data.state);
+        // }
+
+        // const remaining = computeRemainingSeconds(data);
+        // setTimeLeft(remaining);
+        // setTotalDuration(data.total_duration_seconds);
+        // setSessionState(data.is_running ? SESSION_STATES.RUNNING : SESSION_STATES.PAUSED);
     });
 
     // Countdown ticking
@@ -118,19 +153,47 @@ const CurrentTaskTimer = ({ task, session }) => {
     }, [isRunning]);
 
     // Actions
+    // const handlePrimaryAction = async () => {
+    //     if (!task || pending) return;
+
+    //     try {
+    //         setPending(true);
+
+    //         if (isIdle) await startTask(task.id);
+    //         else if (isRunning) await pauseTask(task.id);
+    //         else if (isPaused) await resumeTask(task.id);
+    //     } finally {
+    //         setPending(false);
+    //     }
+    // };
     const handlePrimaryAction = async () => {
         if (!task || pending) return;
 
+        setPending(true);
         try {
-            setPending(true);
+            switch (sessionState) {
+                case FSM.IDLE:
+                    await startTask(task.id);
+                    break;
 
-            if (isIdle) await startTask(task.id);
-            else if (isRunning) await pauseTask(task.id);
-            else if (isPaused) await resumeTask(task.id);
+                case FSM.FOCUS_RUNNING:
+                case FSM.BREAK_RUNNING:
+                    await pauseTask(task.id);
+                    break;
+
+                case FSM.FOCUS_PAUSED:
+                case FSM.BREAK_PAUSED:
+                    await resumeTask(task.id);
+                    break;
+
+                default:
+                    break;
+            }
         } finally {
             setPending(false);
         }
     };
+
 
     const handleEndTask = async () => {
         if (!task || pending || isIdle) return;
@@ -150,7 +213,12 @@ const CurrentTaskTimer = ({ task, session }) => {
         return `${m}:${s.toString().padStart(2, "0")}`;
     };
 
-    const progress = totalDuration ? (timeLeft / totalDuration) * 283 : 0;
+    const CIRCUMFERENCE = 2 * Math.PI * 45;
+
+    const progress = useMemo(
+        () => (totalDuration ? (timeLeft / totalDuration) * CIRCUMFERENCE : 0),
+        [timeLeft, totalDuration]
+    );
 
     return (
         <div className={`bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl border transition-all ${isRunning ? "border-blue-500/50 ring-4 ring-blue-500/5" : "border-gray-200 dark:border-gray-700"}`}>
@@ -174,9 +242,11 @@ const CurrentTaskTimer = ({ task, session }) => {
                     <div className="text-center z-10">
                         <p className="text-5xl font-black">{formatTime(timeLeft)}</p>
                         <p className="text-xs uppercase tracking-widest text-gray-400 mt-1">
-                            {isRunning && "Focusing"}
-                            {isPaused && "Paused"}
-                            {isIdle && "Idle"}
+                            {sessionState === FSM.FOCUS_RUNNING && "Focusing"}
+                            {sessionState === FSM.FOCUS_PAUSED && "Focus Paused"}
+                            {sessionState === FSM.BREAK_RUNNING && "Break"}
+                            {sessionState === FSM.BREAK_PAUSED && "Break Paused"}
+                            {sessionState === FSM.IDLE && "Idle"}
                         </p>
                     </div>
                 </div>
@@ -189,17 +259,21 @@ const CurrentTaskTimer = ({ task, session }) => {
 
                 {/* Controls */}
                 <div className="flex gap-3 w-full">
-                    <button onClick={handlePrimaryAction} disabled={pending}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition ${isRunning ? "bg-amber-100 text-amber-600 hover:bg-amber-400" : "bg-blue-600 text-white hover:bg-blue-700"}`}>
-                        {isRunning && <><IoPauseCircle size={20} /> Pause</>}
-                        {isPaused && <><IoPlayOutline size={20} /> Resume</>}
-                        {isIdle && <><IoPlayOutline size={20} /> Start</>}
+                    <button onClick={handlePrimaryAction} disabled={pending || isTerminated}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition
+                        ${isRunning ? "bg-amber-100 text-amber-600" : "bg-blue-600 text-white"}`}>
+
+                        {sessionState === FSM.IDLE && <><IoPlayOutline /> Start</>}
+                        {sessionState === FSM.FOCUS_RUNNING && <><IoPauseCircle /> Pause</>}
+                        {sessionState === FSM.FOCUS_PAUSED && <><IoPlayOutline /> Resume</>}
+                        {sessionState === FSM.BREAK_RUNNING && <><IoPauseCircle /> Pause</>}
+                        {sessionState === FSM.BREAK_PAUSED && <><IoPlayOutline /> Resume</>}
                     </button>
 
-                    {!isIdle && (
-                        <button onClick={handleEndTask} disabled={pending}
-                            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-white bg-red-600 hover:bg-red-700 transition">
-                            <IoStopCircle size={20} /> End
+                    {showEndButton && (
+                        <button onClick={handleEndTask} disabled={pending || isTerminated}
+                            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-white bg-red-600">
+                            <IoStopCircle /> End
                         </button>
                     )}
                 </div>

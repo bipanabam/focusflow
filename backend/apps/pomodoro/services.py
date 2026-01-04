@@ -1,7 +1,15 @@
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.db.models import F, ExpressionWrapper, DurationField, Sum
+
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+from apps.pomodoro.utils import broadcast_task_event
+
 from apps.pomodoro.models import PomodoroSession, PomodoroPause
+from apps.pomodoro.constants import DEFAULT_POMODORO_SETTINGS
+
+channel_layer = get_channel_layer()
 
 class PomodoroService:
 
@@ -14,6 +22,12 @@ class PomodoroService:
         if task:
             qs = qs.filter(task=task)
         return qs.first()
+    
+    @staticmethod
+    def get_task_sessions(user, task_id):
+        """Return all the sessions of a task."""
+        qs = PomodoroSession.objects.filter(user=user, task_id=task_id).all().order_by('created_at')
+        return qs
 
     @staticmethod
     def start_focus(task, user, duration_minutes=25):
@@ -46,16 +60,21 @@ class PomodoroService:
             duration_minutes=duration_minutes,
             started_at=timezone.now()
         )
-
+        
     @staticmethod
-    def complete_session(session):
+    def complete_session(session, *, manual=False):
         if session.completed:
             raise ValidationError("Session already completed")
+        
+         # close any open pause
+        ongoing_pause = session.pauses.filter(resumed_at__isnull=True).last()
+        if ongoing_pause:
+            ongoing_pause.resumed_at = timezone.now()
+            ongoing_pause.save(update_fields=["resumed_at"])
 
         session.ended_at = timezone.now()
         session.completed = True
 
-        # calculate elapsed seconds accounting for pauses
         paused = session.pauses.filter(resumed_at__isnull=False).aggregate(
             total=Sum(
                 ExpressionWrapper(
@@ -72,4 +91,114 @@ class PomodoroService:
         )
         session.save()
 
+        # Only trigger FSM flow if NOT manual
+        if not manual:
+            PomodoroFlowService.handle_session_completion(session)
+
         return session
+    
+class PomodoroFlowService:
+    
+    @staticmethod
+    def emit_transition(*, user, task, session):
+        """
+        Called whenever a NEW session is created or state changes.
+        """
+        # Broadcast session state to all clients
+        broadcast_task_event(user.id, session)
+
+    @staticmethod
+    def emit_ready_for_focus(user, task):
+        """
+        No active session, but system expects next focus.
+        """
+        async_to_sync(channel_layer.group_send)(
+            f"user_{user.id}",
+            {
+                "type": "pomodoro.event",
+                "payload": {
+                    "type": "READY_FOR_FOCUS",
+                    "task_id": task.id,
+                    "state": "IDLE",
+                },
+            }
+        )
+
+    @staticmethod
+    def handle_session_completion(session):
+        """
+        Called whenever ANY pomodoro session ends.
+        """
+        if session.is_break:
+            PomodoroFlowService._handle_break_completion(session)
+        else:
+            PomodoroFlowService._handle_focus_completion(session)
+
+    @staticmethod
+    def _handle_focus_completion(session):
+        task = session.task
+        user = session.user
+
+        # Task might already be completed manually
+        if task.status == "completed":
+            return
+
+        settings = user.pomodoro_settings or DEFAULT_POMODORO_SETTINGS
+
+        completed_focus = task.pomodoro_sessions.filter(
+            completed=True,
+            is_break=False
+        ).count()
+
+        # Decide break type
+        if completed_focus % settings["long_break_every"] == 0:
+            break_type = "long"
+            duration = settings["long_break_minutes"]
+        else:
+            break_type = "short"
+            duration = settings["short_break_minutes"]
+
+        break_session = PomodoroSession.objects.create(
+            user=user,
+            task=task,
+            is_break=True,
+            break_type=break_type,
+            duration_minutes=duration,
+            started_at=timezone.now(),
+        )
+
+        PomodoroFlowService.emit_transition(
+            user=user,
+            task=task,
+            session=break_session,
+        )
+
+    @staticmethod
+    def _handle_break_completion(session):
+        task = session.task
+        user = session.user
+
+        # Task may have been completed during break
+        if task.status == "completed":
+            return
+
+        settings = user.pomodoro_settings or DEFAULT_POMODORO_SETTINGS
+
+        # Auto-start focus?
+        if not settings.get("auto_start_focus"):
+            PomodoroFlowService.emit_ready_for_focus(user, task)
+            return
+
+        focus_session = PomodoroSession.objects.create(
+            user=user,
+            task=task,
+            is_break=False,
+            duration_minutes=settings["focus_minutes"],
+            started_at=timezone.now(),
+        )
+
+        PomodoroFlowService.emit_transition(
+            user=user,
+            task=task,
+            session=focus_session,
+        )

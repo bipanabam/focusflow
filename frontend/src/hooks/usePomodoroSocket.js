@@ -11,9 +11,12 @@ export function usePomodoroSocket(onSessionUpdate) {
 
         const handleMessage = (e) => {
             const data = JSON.parse(e.data);
-            if (data.type === "SESSION_UPDATE") {
-                onSessionUpdate(data);
-            }
+            if (data.type !== "SESSION_UPDATE") return;
+
+            onSessionUpdate({
+                fsmState: data.fsm_state,
+                session: data,
+            });
         };
 
         ws.addEventListener("message", handleMessage);

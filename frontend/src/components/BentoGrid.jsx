@@ -24,25 +24,26 @@ const BentoGrid = () => {
             try {
                 const todayStr = new Date().toISOString().split("T")[0];
 
-                // fetch pending tasks
                 const tasksData = await getTodaysUncompletedTask(1, todayStr);
                 const tasks = tasksData.results || tasksData;
 
-                //fetch active session
                 const session = await getActiveSession();
                 let activeSessionData = null;
-                if (session.is_running) {
-                    // fetch full task for active session
-                    const activeTask = await getTask(session.task_id);
+
+                if (session?.is_running) {
+                    const activeTask =
+                        tasks.find(t => t.id === session.task_id) ||
+                        await getTask(session.task_id);
+
                     activeSessionData = { session, task: activeTask };
                 }
 
-                // filter out active task from next up tasks
-                const nextUpTasks = activeSessionData
-                    ? tasks.filter(t => t.id !== activeSessionData.task.id)
-                    : tasks;
+                setTodaysTasks(
+                    activeSessionData
+                        ? tasks.filter(t => t.id !== activeSessionData.task.id)
+                        : tasks
+                );
 
-                setTodaysTasks(nextUpTasks);
                 setActiveSession(activeSessionData);
             } catch (err) {
                 console.error(err);
@@ -54,13 +55,9 @@ const BentoGrid = () => {
         fetchData();
     }, []);
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-            </div>
-        );
-    }
+    
+
+    if (loading) return <Spinner fullScreen />;
 
     return (
         <div className="w-full bg-gray-50 dark:bg-gray-900 min-h-screen">
