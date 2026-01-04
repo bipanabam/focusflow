@@ -5,6 +5,7 @@ from apps.pomodoro.models import PomodoroSession
 
 class PomodoroSessionSerializer(serializers.ModelSerializer):
     ends_at = serializers.DateTimeField(read_only=True)
+    actual_duration_seconds = serializers.IntegerField(read_only=True)
     elapsed_seconds = serializers.SerializerMethodField()
     remaining_seconds = serializers.SerializerMethodField()
 
@@ -14,11 +15,13 @@ class PomodoroSessionSerializer(serializers.ModelSerializer):
             "id",
             "task",
             "started_at",
+            "ended_at",
             "ends_at",
             "duration_minutes",
             "is_break",
             "elapsed_seconds",
             "remaining_seconds",
+            "actual_duration_seconds",
             "completed",
         ]
 

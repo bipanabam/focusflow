@@ -111,3 +111,9 @@ export const getActiveSession = async (taskId = null) => {
     // console.log("[ActiveSession]", response.data);
     return response.data;
 };
+
+export const getTaskSessions = async (taskId) => {
+    const response = await API.get(`/pomodoro/sessions/${taskId}/`);
+    return response.data.results || response.data;
+};
+

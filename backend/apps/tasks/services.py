@@ -1,7 +1,6 @@
 from django.utils import timezone
 from django.db import transaction
 from django.db.models import Sum, Count
-from django.db import IntegrityError
 
 from apps.tasks.models import Task
 from apps.pomodoro.models import PomodoroSession, PomodoroPause

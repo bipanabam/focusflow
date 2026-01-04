@@ -12,7 +12,7 @@ import { RiDeleteBin6Fill } from "react-icons/ri";
 import Spinner from "../components/Spinner";
 import FormInput from "../components/FormInput";
 import FormSelect from "../components/FormSelect";
-import { getTask, updateTask, deleteTask } from "../api/apiEndpoints";
+import { getTask, updateTask, deleteTask, getTaskSessions } from "../api/apiEndpoints";
 
 import { TASK_STATUS } from "../constants/taskUI";
 
@@ -37,6 +37,9 @@ const TaskDetail = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [sessions, setSessions] = useState([]);
+    const [activeSession, setActiveSession] = useState(null);
+    const [timeLeft, setTimeLeft] = useState(0);
     
     // State for Delete Modal
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -45,19 +48,40 @@ const TaskDetail = () => {
     const originalTaskRef = useRef(null);
 
     useEffect(() => {
-        const loadTask = async () => {
+        const loadTaskAndSessions = async () => {
             try {
                 setLoading(true);
+
                 const data = await getTask(id);
                 setTask(data);
+
+                const allSessions = await getTaskSessions(data.id);
+                setSessions(allSessions);
+
+                const current = allSessions.find(s => s.is_running || !s.ended_at);
+                if (current) {
+                    setActiveSession(current);
+                    setTimeLeft(computeRemainingSeconds(current));
+                }
             } catch {
-                toast.error("Failed to load task");
+                toast.error("Failed to load task or sessions");
             } finally {
                 setLoading(false);
             }
         };
-        loadTask();
+        loadTaskAndSessions();
     }, [id]);
+
+    useEffect(() => {
+        if (!activeSession) return;
+
+        const timer = setInterval(() => {
+            setTimeLeft(prev => Math.max(prev - 1, 0));
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [activeSession]);
+
 
     useEffect(() => {
         if (task && !originalTaskRef.current) {
@@ -259,6 +283,43 @@ const TaskDetail = () => {
                                     </div>
                                 </div> */}
                             </div>
+                        </div>
+                    </div>
+
+                )}
+                {sessions.length > 0 && (
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm mt-6 space-y-4">
+                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">
+                            Pomodoro Sessions
+                        </h3>
+                        <div className="flex flex-col gap-3 max-h-80 overflow-y-auto">
+                            {sessions.map(session => {
+                                const remaining = session.id === activeSession?.id
+                                    ? timeLeft
+                                    : session.total_duration_seconds - session.paused_seconds;
+                                const durationMins = session.total_duration_seconds / 60;
+
+                                return (
+                                    <div key={session.id} className="flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-3 rounded-xl">
+                                        <div>
+                                            <p className="font-semibold">{session.is_running ? "Current Session" : "Session"} #{session.id}</p>
+                                            <p className="text-xs text-gray-400">
+                                                Started: {new Date(session.started_at).toLocaleTimeString()}
+                                                {session.ended_at && ` • Ended: ${new Date(session.ended_at).toLocaleTimeString()}`}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-sm font-bold">
+                                                {Math.floor(session.actual_duration_seconds / 60)} min {(session.actual_duration_seconds % 60).toString().padStart(2, "0")}sec
+                                            </p>
+                                            <p className={`text-xs font-medium ${session.is_running ? "text-green-600" : session.ended_at ? "text-gray-400" : "text-yellow-600"
+                                                }`}>
+                                                {session.is_running ? "Running" : session.ended_at ? "Completed" : "Paused"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 )}

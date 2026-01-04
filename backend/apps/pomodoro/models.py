@@ -37,10 +37,6 @@ class PomodoroSession(models.Model):
         ]
         
     @property
-    def remaining_seconds(self):
-        return max(0, self.duration_minutes * 60 - self.elapsed_seconds)
-    
-    @property
     def elapsed_seconds(self):
         """
         Total focused time in seconds (excluding pauses)

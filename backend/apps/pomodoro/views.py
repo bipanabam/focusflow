@@ -51,7 +51,18 @@ class ActiveSessionAPIView(APIView):
 
         return Response(data, status=status.HTTP_200_OK)
 
+class TaskSessionsView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def get(self, request, task_id):
+        """
+        Return all sessions for a task belonging to the current user.
+        """
+        user = request.user
+        sessions_qs = PomodoroService.get_task_sessions(user=user, task_id=task_id)
+        serializer = PomodoroSessionSerializer(sessions_qs, many=True)
+        return Response(serializer.data)
+    
 class CompleteSessionAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
