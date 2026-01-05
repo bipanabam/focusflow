@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import CurrentTaskTimer from "./CurrentTaskTimer";
 import NextUpTasks from "./tasks/NextUpTasks";
 import DailyFlow from "./DailyFlow";
@@ -24,6 +24,26 @@ const BentoGrid = () => {
     const [todaysTasks, setTodaysTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeSession, setActiveSession] = useState(null);
+    const [currentTask, setCurrentTask] = useState(null);
+
+    const nextUpTasks = useMemo(() => {
+        if (!activeSession?.task?.id) return todaysTasks;
+
+        return todaysTasks.filter(
+            t => t.id !== activeSession.task.id
+        );
+    }, [todaysTasks, activeSession]);
+
+    const handleSessionEnded = (taskId) => {
+        // Remove completed task from today
+        setTodaysTasks(prev => prev.filter(t => t.id !== taskId));
+
+        // Clear active session
+        setActiveSession(null);
+
+        // Clear current task (or move to next)
+        setCurrentTask(null);
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -39,11 +59,14 @@ const BentoGrid = () => {
 
                 if (ACTIVE_STATES.includes(session.fsm_state)) {
                     const activeTask =
-                    tasks.find(t => t.id === session.task_id) ||
-                    await getTask(session.task_id);
-                    activeSessionData = { session, task: activeTask };
-                }
+                        tasks.find(t => t.id === session.task_id) ||
+                        await getTask(session.task_id);
 
+                    activeSessionData = { session, task: activeTask };
+                    setCurrentTask(activeTask);
+                } else {
+                    setCurrentTask(tasks[0] || null);
+                }
                 // if (session?.is_running) {
                 //     const activeTask =
                 //         tasks.find(t => t.id === session.task_id) ||
@@ -52,11 +75,7 @@ const BentoGrid = () => {
                 //     activeSessionData = { session, task: activeTask };
                 // }
 
-                setTodaysTasks(
-                    activeSessionData
-                        ? tasks.filter(t => t.id !== activeSessionData.task.id)
-                        : tasks
-                );
+                setTodaysTasks(tasks);
 
                 setActiveSession(activeSessionData);
             } catch (err) {
@@ -68,8 +87,6 @@ const BentoGrid = () => {
 
         fetchData();
     }, []);
-
-    
 
     if (loading) return <Spinner fullScreen />;
 
@@ -88,8 +105,9 @@ const BentoGrid = () => {
                         {/* Current Task Timer */}
                         <div className="lg:col-span-1 lg:row-span-2">
                             <CurrentTaskTimer
+                                task={currentTask}
                                 session={activeSession?.session}
-                                task={activeSession?.task || todaysTasks[0]}
+                                onSessionEnded={handleSessionEnded}
                             />
                         </div>
 
@@ -97,7 +115,15 @@ const BentoGrid = () => {
                         <div className="lg:col-span-2 space-y-6">
                             {/* Next Up & Streaks */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <NextUpTasks tasks={todaysTasks.slice(1, )} />
+                                <NextUpTasks tasks={nextUpTasks}
+                                    currentTask={currentTask}
+                                    onSelectTask={async (task) => {
+                                        // stop old session UI immediately
+                                        setActiveSession(null);
+                                        setCurrentTask(task);
+                                        // optional: auto-start
+                                        // await startTask(task.id);
+                                    }} />
                                 <StreaksAndBadges />
                             </div>
                         </div>

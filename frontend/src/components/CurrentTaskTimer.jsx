@@ -8,7 +8,7 @@ import { FSM, RUNNING_STATES, PAUSED_STATES } from "../constants/fsm";
 import { gradientByState } from "../constants/taskUI";
 import { usePomodoroSound } from "../hooks/usePomodoroSound";
 
-const CurrentTaskTimer = ({ task, session }) => {
+const CurrentTaskTimer = ({ task, session, onSessionEnded }) => {
     // Determine initial time
     const { user } = useAuth();
 
@@ -186,6 +186,12 @@ const CurrentTaskTimer = ({ task, session }) => {
         prevStateRef.current = curr;
     }, [sessionState]);
 
+    // when task TERMINATED is received
+    useEffect(() => {
+        if (sessionState === FSM.TERMINATED && task?.id) {
+            onSessionEnded?.(task.id);
+        }
+    }, [sessionState]);
 
     // Actions
     const handlePrimaryAction = async () => {
@@ -216,7 +222,6 @@ const CurrentTaskTimer = ({ task, session }) => {
             setPending(false);
         }
     };
-
 
     const handleEndTask = async () => {
         if (!task || pending || isIdle) return;
@@ -252,6 +257,14 @@ const CurrentTaskTimer = ({ task, session }) => {
                 : "IDLE";
 
     const [startColor, endColor] = gradientByState[mode];
+
+    if (!task) {
+        return (
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 flex items-center justify-center h-full">
+                <p className="text-gray-400">Select a task to start focusing</p>
+            </div>
+        );
+    }
 
 
     return (

@@ -6,7 +6,7 @@ import { TASK_CATEGORY, TASK_PRIORITY } from "../../constants/taskUI";
 
 import { useNavigate } from "react-router-dom";
 
-const NextUpTasks = ({ tasks = [] }) => {
+const NextUpTasks = ({ tasks = [], onSelectTask, currentTask }) => {
     const nav = useNavigate();
 
     return (
@@ -24,7 +24,13 @@ const NextUpTasks = ({ tasks = [] }) => {
                         {tasks.map((task, index) => (
                             <div
                                 key={task.id}
-                                className="group relative p-3 -mx-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors border border-transparent hover:border-gray-100 dark:hover:border-gray-600"
+                                onClick={() => onSelectTask?.(task)}
+                                className={`group cursor-pointer relative p-3 -mx-2 rounded-xl
+                                hover:bg-gray-50 dark:hover:bg-gray-700/50
+                                transition-colors border border-transparent
+                                hover:border-blue-200 dark:hover:border-blue-500/30
+                                 ${task.id === currentTask?.id ? "bg-blue-50 dark:bg-blue-900/30" : ""}
+                                `}
                             >
                                 <div className="flex items-start gap-3">
                                     <div className="flex items-center gap-2">
