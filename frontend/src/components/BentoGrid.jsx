@@ -13,6 +13,13 @@ import Spinner from "./Spinner";
 
 import { getTodaysUncompletedTask, getActiveSession, getTask } from "../api/apiEndpoints";
 
+const ACTIVE_STATES = [
+    "FOCUS_RUNNING",
+    "FOCUS_PAUSED",
+    "BREAK_RUNNING",
+    "BREAK_PAUSED"
+];
+
 const BentoGrid = () => {
     const [todaysTasks, setTodaysTasks] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -30,13 +37,20 @@ const BentoGrid = () => {
                 const session = await getActiveSession();
                 let activeSessionData = null;
 
-                if (session?.is_running) {
+                if (ACTIVE_STATES.includes(session.fsm_state)) {
                     const activeTask =
-                        tasks.find(t => t.id === session.task_id) ||
-                        await getTask(session.task_id);
-
+                    tasks.find(t => t.id === session.task_id) ||
+                    await getTask(session.task_id);
                     activeSessionData = { session, task: activeTask };
                 }
+
+                // if (session?.is_running) {
+                //     const activeTask =
+                //         tasks.find(t => t.id === session.task_id) ||
+                //         await getTask(session.task_id);
+
+                //     activeSessionData = { session, task: activeTask };
+                // }
 
                 setTodaysTasks(
                     activeSessionData

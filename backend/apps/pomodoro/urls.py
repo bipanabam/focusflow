@@ -7,4 +7,5 @@ urlpatterns = [
     path('sessions/<int:pk>/complete/', views.CompleteSessionAPIView.as_view()),
     path("break/start/", views.StartBreakAPIView.as_view()),
     path('sessions/<int:task_id>/', views.TaskSessionsView.as_view(), name='task-sessions'),
+    path('heartbeat/', views.PomodoroHeartbeatAPIView.as_view()),
 ]

@@ -4,10 +4,13 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
 from django.db.models import F, Sum, ExpressionWrapper, DurationField
+
 from apps.tasks.models import Task
+
 from apps.pomodoro.serializers import PomodoroSessionSerializer
 from apps.pomodoro.models import PomodoroSession
 from apps.pomodoro.services import PomodoroService
+from apps.pomodoro.utils import build_session_payload, derive_session_state
 
 class ActiveSessionAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -35,11 +38,14 @@ class ActiveSessionAPIView(APIView):
             )
         )["total"]
         paused_seconds = paused.total_seconds() if paused else 0
+        
+        fsm_state = derive_session_state(session)
 
         # Prepare the response dict
         data = {
             "id": session.id,
             "task_id": session.task.id if session.task else None,
+            "fsm_state": fsm_state,
             "started_at": session.started_at,
             "ended_at": session.ended_at,
             "is_running": not session.pauses.filter(resumed_at__isnull=True).exists() and not session.completed,
@@ -77,17 +83,22 @@ class CompleteSessionAPIView(APIView):
 
         return Response(PomodoroSessionSerializer(session).data)
     
-# class StartPomodoroAPIView(APIView):
-#     permission_classes = [IsAuthenticated]
+class PomodoroHeartbeatAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
-#     def post(self, request, task_id):
-#         task = Task.objects.get(id=task_id, owner=request.user)
-#         session = PomodoroService.start_focus(
-#             task,
-#             request.user,
-#             request.data.get('duration', 25)
-#         )
-#         return Response(PomodoroSessionSerializer(session).data
+    def post(self, request):
+        session = PomodoroService.get_active_session(request.user)
+
+        if not session:
+            return Response({
+                "active": False,
+                "fsm_state": "IDLE",
+            })
+
+        return Response({
+            "active": True,
+            **build_session_payload(session),
+        })
 
 class StartBreakAPIView(APIView):
     permission_classes = [IsAuthenticated]

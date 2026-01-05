@@ -81,3 +81,21 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 } */
+
+@keyframes pulse-ring {
+  0% {
+    opacity: 0.4;
+  }
+
+  50% {
+    opacity: 0.9;
+  }
+
+  100% {
+    opacity: 0.4;
+  }
+}
+
+.pulse-ring {
+  animation: pulse-ring 2s ease-in-out infinite;
+}

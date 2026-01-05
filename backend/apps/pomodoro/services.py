@@ -11,6 +11,18 @@ from apps.pomodoro.constants import DEFAULT_POMODORO_SETTINGS
 
 channel_layer = get_channel_layer()
 
+def ensure_session_not_expired(session):
+    if not session:
+        return None
+
+    if session.completed:
+        return session
+
+    if session.remaining_seconds <= 0:
+        PomodoroService.complete_session(session)
+
+    return session
+
 class PomodoroService:
 
     @staticmethod
@@ -21,7 +33,8 @@ class PomodoroService:
         qs = PomodoroSession.objects.filter(user=user, completed=False)
         if task:
             qs = qs.filter(task=task)
-        return qs.first()
+        session = qs.select_related("task").first()
+        return ensure_session_not_expired(session)
     
     @staticmethod
     def get_task_sessions(user, task_id):

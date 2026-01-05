@@ -31,6 +31,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                         "email": user.email,
                         "first_name": user.first_name,
                         "last_name": user.last_name,
+                        "pomodoro_settings": user.pomodoro_settings,
                     }
                 },
                 status=status.HTTP_200_OK

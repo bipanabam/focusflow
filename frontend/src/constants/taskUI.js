@@ -37,3 +37,9 @@ export const TASK_CATEGORY = {
     personal: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200",
     admin: "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-200",
 };
+
+export const gradientByState = {
+    FOCUS: ["#3b82f6", "#8b5cf6"],     // blue → violet
+    BREAK: ["#22c55e", "#16a34a"],     // green tones
+    IDLE: ["#9ca3af", "#6b7280"],      // gray
+};
