@@ -2,6 +2,7 @@ from rest_framework import serializers
 from apps.tasks.models import Task
 
 class TaskSerializer(serializers.ModelSerializer):
+    focus_duration_seconds = serializers.IntegerField(read_only=True)
     class Meta:
         model = Task
         fields = [
@@ -12,10 +13,13 @@ class TaskSerializer(serializers.ModelSerializer):
             'priority',
             'status',
             'owner_id',
+            'focus_duration_seconds',
             'created_at',
             'updated_at',
+            'started_at',
+            'ended_at',
         ]
-        read_only_fields = ['id', 'owner_id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'owner_id', 'created_at', 'updated_at', 'started_at', 'ended_at']
         
     def create(self, validated_data):
         user = self.context['request'].user

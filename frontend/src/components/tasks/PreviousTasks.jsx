@@ -1,7 +1,15 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { formatDistanceToNow } from "date-fns";
 import { getFilteredTasks } from "../../api/apiEndpoints";
-import { TASK_PRIORITY } from "../../constants/taskUI";
+import { TASK_PRIORITY, TASK_STATUS } from "../../constants/taskUI";
 import Spinner from "../../components/Spinner";
+
+const formatDuration = (seconds = 0) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return m > 0 ? `${m}m ${s}s` : `${s}s`;
+};
 
 const PreviousTasks = () => {
     const [tasks, setTasks] = useState([]);
@@ -15,6 +23,8 @@ const PreviousTasks = () => {
     const [page, setPage] = useState(1);
     const [hasNext, setHasNext] = useState(false);
     const [totalCount, setTotalCount] = useState(0);
+
+    const nav = useNavigate();
 
     // Mock previous tasks with status and priority
     // const previousTasks = [
@@ -155,10 +165,13 @@ const PreviousTasks = () => {
     if (isInitialLoading) return <div className="flex justify-center p-12"><Spinner /></div>;
 
     const TaskItem = ({ task }) => (
-        <div className="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600 hover:shadow-md transition">
+        <div className="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600 hover:shadow-md transition"
+            onClick={() => nav(`/tasks/${task.id}`)}>
             <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
-                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">
+                    <h4 className={`text-sm font-semibold mb-3 line-clamp-2
+                        ${task.status === "completed" ? "line-through text-gray-400" : ""}
+                    `}>
                         {task.title}
                     </h4>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{task.completedAt}</p>
@@ -167,12 +180,19 @@ const PreviousTasks = () => {
                     {task.priority.toUpperCase()}
                 </span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex justify-between items-center gap-2">
                 <span className="text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-2 py-1 rounded">
                     {task.category}
                 </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {Math.floor(task.duration / 60)}m
+                <span className={`text-xs ${TASK_STATUS[task.status].text}`}>
+                    {task.status === "completed" && task.focus_duration_seconds
+                        ? `Total: ${formatDuration(task.focus_duration_seconds)}`
+                        : `${task.status === "pending" ? "Pending" : "In Progress"}`}
+                </span>
+            </div>
+            <div>
+                <span className="text-xs text-gray-500">
+                    {formatDistanceToNow(task.created_at, { addSuffix: true })}
                 </span>
             </div>
         </div>

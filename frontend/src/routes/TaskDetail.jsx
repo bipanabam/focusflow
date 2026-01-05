@@ -8,6 +8,8 @@ import {
 } from "react-icons/ci";
 import { BiSolidEdit } from "react-icons/bi";
 import { RiDeleteBin6Fill } from "react-icons/ri";
+import { RxLapTimer } from "react-icons/rx";
+import { formatDistance } from "date-fns";
 
 import Spinner from "../components/Spinner";
 import FormInput from "../components/FormInput";
@@ -151,6 +153,33 @@ const TaskDetail = () => {
         }
     }, [id, navigate]);
 
+    const pomodoroStats = React.useMemo(() => {
+        const stats = {
+            focus: { count: 0, totalSeconds: 0 },
+            break: { count: 0, totalSeconds: 0 },
+        };
+
+        sessions.forEach(session => {
+            if (session.is_break) {
+                stats["break"].count += 1;
+                stats["break"].totalSeconds += session.actual_duration_seconds || 0;
+            } else {
+                stats["focus"].count += 1;
+                stats["focus"].totalSeconds += session.actual_duration_seconds || 0;
+
+            }
+        });
+
+        return stats;
+    }, [sessions]);
+
+    const formatDuration = (seconds) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m}m ${s}s`;
+    };
+
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-screen">
@@ -246,6 +275,12 @@ const TaskDetail = () => {
                                     <div className="mt-auto pt-8 flex items-center gap-6 text-[11px] text-gray-400 border-t border-gray-50 dark:border-gray-700/50">
                                         <span className="flex items-center gap-1"><CiClock1 size={14} /> Created {new Date(task.created_at).toLocaleDateString()}</span>
                                         <span className="flex items-center gap-1"><CiEdit size={14} /> Edited {new Date(task.updated_at).toLocaleDateString()}</span>
+                                        {task.status === "completed" ?
+                                        <span className="flex items-center gap-1"><RxLapTimer size={14} />
+                                            {formatDistance(task.started_at,task.ended_at, { addSuffix: true })}</span>
+                                            :
+                                            <span className="text-gray-400 italic">Not Completed</span>
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -287,7 +322,7 @@ const TaskDetail = () => {
                     </div>
 
                 )}
-                {sessions.length > 0 && (
+                {/* {sessions.length > 0 && (
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm mt-6 space-y-4">
                         <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">
                             Pomodoro Sessions
@@ -320,6 +355,29 @@ const TaskDetail = () => {
                                     </div>
                                 );
                             })}
+                        </div>
+                    </div>
+                )} */}
+                {sessions.length > 0 && (
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="bg-linear-to-br from-red-500 to-orange-500 text-white p-5 rounded-2xl shadow">
+                            <p className="text-xs uppercase opacity-80">Focus Sessions</p>
+                            <p className="text-2xl font-bold mt-1">
+                                {pomodoroStats.focus.count}
+                            </p>
+                            <p className="text-sm mt-1">
+                                {formatDuration(pomodoroStats.focus.totalSeconds)}
+                            </p>
+                        </div>
+
+                        <div className="bg-linear-to-br from-blue-500 to-indigo-500 text-white p-5 rounded-2xl shadow">
+                            <p className="text-xs uppercase opacity-80">Breaks</p>
+                            <p className="text-2xl font-bold mt-1">
+                                {pomodoroStats.break.count}
+                            </p>
+                            <p className="text-sm mt-1">
+                                {formatDuration(pomodoroStats.break.totalSeconds)}
+                            </p>
                         </div>
                     </div>
                 )}
