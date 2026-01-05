@@ -127,7 +127,16 @@ def logout(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def authenticated(request):
-    return Response({"message": "authenticated!"})
+    user = request.user
+    return Response({"message": "authenticated!",
+                      "user": {
+                        "id": user.id,
+                        "email": user.email,
+                        "first_name": user.first_name,
+                        "last_name": user.last_name,
+                        "pomodoro_settings": user.pomodoro_settings,
+                    }
+                })
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserProfileSerializer

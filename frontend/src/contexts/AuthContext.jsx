@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }) => {
 
         try {
             const data = await authenticated();
+            setUser(data.user);
             setAuth(true);
         } catch {
             setAuth(false);

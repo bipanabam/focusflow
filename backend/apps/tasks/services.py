@@ -21,7 +21,7 @@ class TaskService:
             task=task,
             user=user,
             completed=False,
-            is_break=False
+            # is_break=False
         ).first()
 
     @staticmethod

@@ -12,7 +12,7 @@ const CurrentTaskTimer = ({ task, session }) => {
     // Determine initial time
     const { user } = useAuth();
 
-    const DEFAULT_FOCUS_MINUTES = 25;
+    const DEFAULT_FOCUS_MINUTES = user?.pomodoro_settings?.focus_minutes || 25;
 
     const getInitialTime = () => {
         if (session) {
@@ -70,7 +70,7 @@ const CurrentTaskTimer = ({ task, session }) => {
         if (!session) {
             const initialTime = task?.estimated_pomodoros
                 ? task.estimated_pomodoros * 25 * 60
-                : DEFAULT_DURATION;
+                : DEFAULT_FOCUS_MINUTES * 60;
 
             setSessionState(FSM.IDLE);
             setTimeLeft(initialTime);
