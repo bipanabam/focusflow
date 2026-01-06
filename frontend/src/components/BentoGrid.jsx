@@ -11,7 +11,8 @@ import WeeklyOverview from "./WeeklyOverview";
 import QuickActions from "./QuickActions";
 import Spinner from "./Spinner";
 
-import { getTodaysUncompletedTask, getActiveSession, getTask } from "../api/apiEndpoints";
+import { getTodaysUncompletedTask, getActiveSession, getTask, getDailySummary } from "../api/apiEndpoints";
+import { data } from 'react-router-dom';
 
 const ACTIVE_STATES = [
     "FOCUS_RUNNING",
@@ -25,6 +26,8 @@ const BentoGrid = () => {
     const [loading, setLoading] = useState(true);
     const [activeSession, setActiveSession] = useState(null);
     const [currentTask, setCurrentTask] = useState(null);
+    const [dailySummary, setDailySummary] = useState(null);
+
 
     const nextUpTasks = useMemo(() => {
         if (!activeSession?.task?.id) return todaysTasks;
@@ -43,6 +46,16 @@ const BentoGrid = () => {
 
         // Clear current task (or move to next)
         setCurrentTask(null);
+    };
+
+    const fetchDailySummary = async () => {
+        try {
+            const todayStr = new Date().toISOString().split("T")[0];
+            const response = await getDailySummary(todayStr);
+            setDailySummary(response);
+        } catch (err) {
+            console.error("Failed to fetch daily summary", err);
+        }
     };
 
     useEffect(() => {
@@ -76,7 +89,6 @@ const BentoGrid = () => {
                 // }
 
                 setTodaysTasks(tasks);
-
                 setActiveSession(activeSessionData);
             } catch (err) {
                 console.error(err);
@@ -86,6 +98,7 @@ const BentoGrid = () => {
         };
 
         fetchData();
+        fetchDailySummary();
     }, []);
 
     if (loading) return <Spinner fullScreen />;
@@ -95,7 +108,7 @@ const BentoGrid = () => {
             <div className="w-full max-w-7xl mx-auto px-4 py-8">
                 {/* Section 1: Quick Stats Overview */}
                 <section className="mb-12">
-                    <StatsHeader />
+                    <StatsHeader dailySummary={dailySummary} />
                 </section>
 
                 {/* Section 2: Focus & Next Up */}
@@ -131,13 +144,14 @@ const BentoGrid = () => {
                 </section>
 
                 {/* Section 3: Analytics */}
-                {/* <section className="mb-12">
+                <section className="mb-12">
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Analytics</h2>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <DailyFlow />
-                        <WeeklyOverview />
+                        <DailyFlow flow={dailySummary?.daily_flow || []} 
+                        total_pomodoros={dailySummary?.total_pomodoros} />
+                        {/* <WeeklyOverview /> */}
                     </div>
-                </section> */}
+                </section>
 
                 {/* Section 4: Quick Actions & Tasks */}
                 {/* <section className="mb-12">

@@ -1,17 +1,25 @@
 import React from "react";
 
-const StatsHeader = () => {
+const formatDuration = (seconds = 0) => {
+    const h = Math.floor(seconds / 3600 )
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return h > 0 ? `${h}h ${m}m ${s}s` : (m > 0 ? `${m}m ${s}s` : `${s}s`);
+};
+
+const StatsHeader = ({dailySummary}) => {
+    console.log(dailySummary)
     const stats = [
         {
             label: "Tasks Today",
-            value: "8",
-            subtext: "4 completed",
+            value: dailySummary?.total_tasks ?? 0,
+            subtext: `${dailySummary.completed_tasks} completed`,
             icon: "✓",
             color: "bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300"
         },
         {
             label: "Time Focused",
-            value: "4h 32m",
+            value: formatDuration(dailySummary.total_focus_seconds),
             subtext: "+25% from yesterday",
             icon: "⏱",
             color: "bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300"

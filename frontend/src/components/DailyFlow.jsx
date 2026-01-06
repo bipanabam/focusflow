@@ -1,53 +1,93 @@
-import React from "react";
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    Tooltip,
+    ResponsiveContainer,
+} from "recharts";
 
-const DailyFlow = () => {
-    // Mock data for the chart
-    const data = [
-        { time: "9 AM", value: 45 },
-        { time: "10 AM", value: 52 },
-        { time: "11 AM", value: 48 },
-        { time: "12 PM", value: 61 },
-        { time: "1 PM", value: 55 },
-        { time: "2 PM", value: 67 },
-        { time: "3 PM", value: 60 },
-    ];
+const DailyFlow = ({ flow = [], total_pomodoros }) => {
+    if (!flow.length) {
+        return (
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6">
+                <p className="text-sm text-gray-500">No activity today</p>
+            </div>
+        );
+    }
 
-    const maxValue = Math.max(...data.map(d => d.value));
+    const peak = flow.reduce((a, b) => (b.value > a.value ? b : a));
+    const avg = Math.round(
+        flow.reduce((sum, i) => sum + i.value, 0) / flow.length
+    );
 
     return (
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
             <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Daily Flow</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Your productivity throughout the day</p>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Daily Flow
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Productivity throughout the day
+                </p>
             </div>
 
             {/* Chart */}
-            <div className="flex items-end justify-between h-48 gap-2">
-                {data.map((item, index) => (
-                    <div key={index} className="flex flex-col items-center gap-2 flex-1">
-                        {/* Bar */}
-                        <div className="w-full bg-gradient-to-t from-blue-400 to-blue-500 rounded-t-lg transition-all hover:from-blue-500 hover:to-blue-600 cursor-pointer"
-                            style={{ height: `${(item.value / maxValue) * 150}px` }}
+            <div className="h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={flow}>
+                        <XAxis
+                            dataKey="time"
+                            tick={{ fontSize: 12 }}
+                            stroke="currentColor"
                         />
-                        {/* Label */}
-                        <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">{item.time}</span>
-                    </div>
-                ))}
+                        <YAxis hide />
+                        <Tooltip
+                            cursor={{ fill: "transparent" }}
+                            contentStyle={{
+                                backgroundColor: "#111827",
+                                borderRadius: 8,
+                                border: "none",
+                                color: "#fff",
+                            }}
+                        />
+                        <Bar
+                            dataKey="value"
+                            radius={[8, 8, 0, 0]}
+                            fill="currentColor"
+                            className="text-blue-500"
+                        />
+                    </BarChart>
+                </ResponsiveContainer>
             </div>
 
             {/* Stats */}
             <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t dark:border-gray-700">
                 <div className="text-center">
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Peak Time</p>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white">2 PM</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Peak Time
+                    </p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">
+                        {peak.time}
+                    </p>
                 </div>
+
                 <div className="text-center">
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Avg Productivity</p>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white">56%</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Avg Productivity
+                    </p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">
+                        {avg}%
+                    </p>
                 </div>
+
                 <div className="text-center">
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Sessions</p>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white">7</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Total Sessions
+                    </p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">
+                        {total_pomodoros}
+                    </p>
                 </div>
             </div>
         </div>

@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'apps.accounts',
     'apps.tasks',
     'apps.pomodoro',
+    'apps.analytics',
 ]
 INSTALLED_APPS += ["rest_framework_simplejwt.token_blacklist"]
 

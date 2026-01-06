@@ -30,4 +30,5 @@ urlpatterns = [
     path('auth/', include('apps.accounts.urls')),
     path('', include('apps.tasks.urls')),
     path('pomodoro/', include('apps.pomodoro.urls')),
+    path('analytics/', include('apps.analytics.urls')),
 ]

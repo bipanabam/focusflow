@@ -117,3 +117,9 @@ export const getTaskSessions = async (taskId) => {
     return response.data.results || response.data;
 };
 
+// Analytics
+export const getDailySummary = async (date) => {
+    const response = await API.get(`/analytics/daily/?date=${date}`)
+    console.log(response.data)
+    return response.data
+}
