@@ -1,7 +1,6 @@
 import React from "react";
 
 const formatDuration = (seconds = 0) => {
-    console.log(seconds)
     const h = Math.floor(seconds / 3600 )
     const m = Math.floor((seconds - h*3600) / 60 );
     const s = seconds % 60;
@@ -9,6 +8,24 @@ const formatDuration = (seconds = 0) => {
 };
 
 const StatsHeader = ({dailySummary}) => {
+    const formatFocusComparison = (comparison) => {
+        if (!comparison) return "No data from yesterday";
+
+        const { percentage, trend } = comparison;
+
+        if (trend === "up") {
+            return `↑ ${percentage}% from yesterday`;
+        }
+
+        if (trend === "down") {
+            return `↓ ${Math.abs(percentage)}% from yesterday`;
+        }
+
+        return "Same as yesterday";
+    };
+    const comparison =
+        dailySummary?.comparison;
+
     const stats = [
         {
             label: "Tasks Today",
@@ -20,9 +37,14 @@ const StatsHeader = ({dailySummary}) => {
         {
             label: "Time Focused",
             value: formatDuration(dailySummary?.total_focus_seconds),
-            subtext: "+25% from yesterday",
+            subtext: formatFocusComparison(comparison),
             icon: "⏱",
-            color: "bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300"
+            color:
+                comparison?.trend === "up"
+                    ? "bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300"
+                    : comparison?.trend === "down"
+                        ? "bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300"
+                        : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
         },
         {
             label: "Productivity",

@@ -32,9 +32,35 @@ class AnalyticsService:
             total=Sum("actual_duration_seconds")
         )["total"] or 0
         
-        total_break_seconds = sessions.filter(is_break=True).aggregate(
+        # Comparison with yesterday's focus time
+        yesterday = date - timedelta(days=1)
+        yesterday_sessions = PomodoroSession.objects.filter( 
+            user=user,
+            started_at__date=yesterday,
+            is_break=False,
+            completed=True
+        )
+        yesterdays_focus_seconds = yesterday_sessions.aggregate(
             total=Sum("actual_duration_seconds")
         )["total"] or 0
+        
+        diff_seconds = total_focus_seconds - yesterdays_focus_seconds
+        
+        if yesterdays_focus_seconds > 0:
+            percent_change = round(
+                (diff_seconds / yesterdays_focus_seconds) * 100, 1
+            )
+        else:
+            percent_change = 100 if total_focus_seconds > 0 else 0
+        comparison = {
+            "difference_seconds": diff_seconds,
+            "percentage": percent_change,
+            "trend": (
+                "up" if diff_seconds > 0
+                else "down" if diff_seconds < 0
+                else "same"
+            )
+        }
         
         # Hourly aggregation
         hourly_data = defaultdict(lambda: {"focus": 0, "break": 0})
@@ -72,6 +98,7 @@ class AnalyticsService:
             'total_focus_seconds': total_focus_seconds,
             'total_focus_hours': round(total_focus_seconds / 3600, 2),
             'avg_daily_productivity': avg_daily_productivity,
+            'comparison': comparison,
             'total_pomodoros': total_pomodoros,
             'daily_flow': daily_flow,   
         }

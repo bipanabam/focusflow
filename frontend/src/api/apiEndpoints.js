@@ -128,6 +128,5 @@ export const getWeeklySummary = async (weekStart = null, weekEnd = null) => {
         `/analytics/weekly/?start_date=${weekStart}&end_date=${weekEnd}` :
         `/analytics/weekly/`
     const response = await API.get(url);
-    console.log(response.data)
     return response.data;
 }
