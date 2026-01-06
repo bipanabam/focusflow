@@ -1,6 +1,7 @@
 from django.utils import timezone
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from collections import defaultdict
+from datetime import timedelta
 
 from apps.tasks.models import Task
 from apps.pomodoro.models import PomodoroSession
@@ -75,3 +76,51 @@ class AnalyticsService:
             'daily_flow': daily_flow,   
         }
         
+    @staticmethod
+    def get_weekly_summary(user, start_date, end_date):
+        """
+        Returns a summary of tasks and focus sessions between start_date and end_date (inclusive)
+        """
+        tasks = Task.objects.filter(
+            owner=user,
+            created_at__date__gte=start_date,
+            created_at__date__lte=end_date
+        )
+        total_tasks_completed = tasks.filter(status="completed").count()
+        
+        # Prepare daily breakdown
+        daily_breakdown = []
+        current_date = start_date
+        while current_date <= end_date:
+            day_tasks = tasks.filter(created_at__date=current_date)
+            completed = day_tasks.filter(status="completed").count()
+            
+            
+            sessions = PomodoroSession.objects.filter(
+                user=user,
+                started_at__date=current_date,
+                is_break=False,
+                completed=True
+            )
+            focus_hours = round((sessions.aggregate(total=Sum("actual_duration_seconds"))["total"] or 0) / 3600, 2)
+
+            daily_breakdown.append({
+                "date": current_date,
+                "focus_hours": focus_hours,
+                "tasks_completed": completed,
+                "total_tasks": day_tasks.count()
+            })
+            current_date += timedelta(days=1)
+        # Weekly average daily focus
+        avg_daily_focus_hours = round(sum(d["focus_hours"] for d in daily_breakdown) / len(daily_breakdown), 2)
+
+        total_focus_seconds = sum(d["focus_hours"] * 3600 for d in daily_breakdown)
+    
+        return {
+            "week_start": start_date,
+            "week_end": end_date,
+            "total_tasks_completed": total_tasks_completed,
+            "total_focus_hours": total_focus_seconds,
+            "avg_daily_focus_hours": avg_daily_focus_hours,
+            "daily_breakdown": daily_breakdown,
+        }

@@ -150,6 +150,7 @@ const BentoGrid = () => {
                         <DailyFlow flow={dailySummary?.daily_flow || []} 
                         total_pomodoros={dailySummary?.total_pomodoros} />
                         {/* <WeeklyOverview /> */}
+                        <WeeklyOverview />
                     </div>
                 </section>
 

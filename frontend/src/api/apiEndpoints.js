@@ -120,5 +120,14 @@ export const getTaskSessions = async (taskId) => {
 // Analytics
 export const getDailySummary = async (date) => {
     const response = await API.get(`/analytics/daily/?date=${date}`)
-    return response.data
+    return response.data;
+}
+
+export const getWeeklySummary = async (weekStart = null, weekEnd = null) => {
+    const url = weekStart && weekEnd ? 
+        `/analytics/weekly/?start_date=${weekStart}&end_date=${weekEnd}` :
+        `/analytics/weekly/`
+    const response = await API.get(url);
+    console.log(response.data)
+    return response.data;
 }
