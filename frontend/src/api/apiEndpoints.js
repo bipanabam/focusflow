@@ -130,3 +130,15 @@ export const getWeeklySummary = async (weekStart = null, weekEnd = null) => {
     const response = await API.get(url);
     return response.data;
 }
+
+export const getStreaks = async () => {
+    const response = await API.get('/analytics/streaks/');
+    return response.data;
+}
+
+export const getMonthlyActivity = async (year, month) => {
+    const res = await API.get(
+        `/analytics/activity-heatmap/monthly/?year=${year}&month=${month}`
+    );
+    return res.data;
+};

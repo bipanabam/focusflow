@@ -11,7 +11,7 @@ import WeeklyOverview from "./WeeklyOverview";
 import QuickActions from "./QuickActions";
 import Spinner from "./Spinner";
 
-import { getTodaysUncompletedTask, getActiveSession, getTask, getDailySummary } from "../api/apiEndpoints";
+import { getTodaysUncompletedTask, getActiveSession, getTask, getDailySummary, getStreaks } from "../api/apiEndpoints";
 import { data } from 'react-router-dom';
 
 const ACTIVE_STATES = [
@@ -27,7 +27,7 @@ const BentoGrid = () => {
     const [activeSession, setActiveSession] = useState(null);
     const [currentTask, setCurrentTask] = useState(null);
     const [dailySummary, setDailySummary] = useState(null);
-
+    const [streaks, setStreaks] = useState(null);
 
     const nextUpTasks = useMemo(() => {
         if (!activeSession?.task?.id) return todaysTasks;
@@ -96,9 +96,18 @@ const BentoGrid = () => {
                 setLoading(false);
             }
         };
+        const fetchStreaks = async () => {
+            try {
+                const data = await getStreaks();
+                setStreaks(data);
+            } catch (err) {
+                console.error("Failed to fetch streaks", err);
+            }
+        };
 
         fetchData();
         fetchDailySummary();
+        fetchStreaks();
     }, []);
 
     if (loading) return <Spinner fullScreen />;
@@ -108,7 +117,9 @@ const BentoGrid = () => {
             <div className="w-full max-w-7xl mx-auto px-4 py-8">
                 {/* Section 1: Quick Stats Overview */}
                 <section className="mb-12">
-                    <StatsHeader dailySummary={dailySummary} />
+                    <StatsHeader 
+                        dailySummary={dailySummary}
+                        streaks={streaks} />
                 </section>
 
                 {/* Section 2: Focus & Next Up */}
@@ -137,7 +148,7 @@ const BentoGrid = () => {
                                         // optional: auto-start
                                         // await startTask(task.id);
                                     }} />
-                                <StreaksAndBadges />
+                                <StreaksAndBadges streaks={streaks} />
                             </div>
                         </div>
                     </div>

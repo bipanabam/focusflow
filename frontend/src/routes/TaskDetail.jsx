@@ -358,7 +358,7 @@ const TaskDetail = () => {
                         </div>
                     </div>
                 )} */}
-                {sessions.length > 0 && (
+                {!isEditing && sessions.length > 0 && (
                     <div className="grid grid-cols-2 gap-4 mb-4">
                         <div className="bg-linear-to-br from-red-500 to-orange-500 text-white p-5 rounded-2xl shadow">
                             <p className="text-xs uppercase opacity-80">Focus Sessions</p>

@@ -7,7 +7,7 @@ const formatDuration = (seconds = 0) => {
     return h > 0 ? `${h}h ${m}m ${s}s` : (m > 0 ? `${m}m ${s}s` : `${s}s`);
 };
 
-const StatsHeader = ({dailySummary}) => {
+const StatsHeader = ({dailySummary, streaks}) => {
     const formatFocusComparison = (comparison) => {
         if (!comparison) return "No data from yesterday";
 
@@ -55,10 +55,17 @@ const StatsHeader = ({dailySummary}) => {
         },
         {
             label: "Streak",
-            value: "7 days",
-            subtext: "Keep it going!",
+            value: streaks?.current_streak
+                ? `${streaks.current_streak} day${streaks.current_streak > 1 ? "s" : ""}`
+                : "—",
+            subtext: streaks?.current_streak
+                ? `Best: ${streaks.longest_streak} days`
+                : "Start a streak today",
             icon: "🔥",
-            color: "bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300"
+            color:
+                streaks?.current_streak >= 7
+                    ? "bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
         }
     ];
 

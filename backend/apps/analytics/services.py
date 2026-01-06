@@ -1,5 +1,7 @@
 from django.utils import timezone
 from django.db.models import Sum, Q
+from calendar import monthrange
+from django.db.models.functions import TruncDate
 from collections import defaultdict
 from datetime import timedelta
 
@@ -150,4 +152,102 @@ class AnalyticsService:
             "total_focus_hours": total_focus_seconds,
             "avg_daily_focus_hours": avg_daily_focus_hours,
             "daily_breakdown": daily_breakdown,
+        }
+        
+    @staticmethod
+    def get_task_completion_streaks(user):
+        """
+        Calculates task completion streaks for a user.
+        A streak day = at least one completed task on that date.
+        """
+        # Get all distinct dates with completed tasks
+        completed_days_qs = (
+            Task.objects
+            .filter(owner=user, status="completed")
+            .annotate(day=TruncDate("ended_at"))
+            .values_list("day", flat=True)
+            .distinct()
+            .order_by("day")
+        )
+
+        completed_days = list(completed_days_qs)
+
+        if not completed_days:
+            return {
+                "current_streak": 0,
+                "longest_streak": 0,
+                "streak_start_date": None,
+                "total_active_days": 0,
+            }
+
+        # Calculate streaks
+        longest_streak = 1
+        current_streak = 1
+        temp_streak = 1
+
+        streak_start_date = completed_days[0]
+        longest_streak_start = completed_days[0]
+
+        for i in range(1, len(completed_days)):
+            if completed_days[i] == completed_days[i - 1] + timedelta(days=1):
+                temp_streak += 1
+            else:
+                if temp_streak > longest_streak:
+                    longest_streak = temp_streak
+                    longest_streak_start = completed_days[i - temp_streak]
+                temp_streak = 1
+
+        # Final longest streak check
+        if temp_streak > longest_streak:
+            longest_streak = temp_streak
+            longest_streak_start = completed_days[-temp_streak]
+
+        # Current streak (must include today or yesterday)
+        today = timezone.now().date()
+
+        if completed_days[-1] == today:
+            current_streak = temp_streak
+            streak_start_date = completed_days[-temp_streak]
+        elif completed_days[-1] == today - timedelta(days=1):
+            current_streak = temp_streak
+            streak_start_date = completed_days[-temp_streak]
+        else:
+            current_streak = 0
+            streak_start_date = None
+
+        return {
+            "current_streak": current_streak,
+            "longest_streak": longest_streak,
+            "streak_start_date": streak_start_date,
+            "total_active_days": len(completed_days),
+        }
+        
+    @staticmethod
+    def get_monthly_active_days(user, year=None, month=None):
+        today = timezone.now().date()
+
+        year = year or today.year
+        month = month or today.month
+
+        start_date = today.replace(day=1)
+        last_day = monthrange(year, month)[1]
+        end_date = today.replace(day=last_day)
+
+        active_days = (
+            Task.objects
+            .filter(
+                owner=user,
+                status="completed",
+                updated_at__date__range=(start_date, end_date)
+            )
+            .annotate(day=TruncDate("updated_at"))
+            .values_list("day", flat=True)
+            .distinct()
+            .order_by("day")
+        )
+
+        return {
+            "year": year,
+            "month": month,
+            "active_days": list(active_days)
         }
