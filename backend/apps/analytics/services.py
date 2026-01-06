@@ -22,38 +22,45 @@ class AnalyticsService:
         sessions = PomodoroSession.objects.filter(
             user=user,
             started_at__date=date,
-            is_break=False,
+            # is_break=False,
             completed=True
         )
-        total_pomodoros = sessions.count()
+        total_pomodoros = sessions.filter(is_break=False).count()
         
-        total_focus_seconds = sessions.aggregate(
-            total=Sum('actual_duration_seconds')
-        )['total'] or 0
+        total_focus_seconds = sessions.filter(is_break=False).aggregate(
+            total=Sum("actual_duration_seconds")
+        )["total"] or 0
         
-        # Aggregate focus time by hour
-        buckets = defaultdict(int)
+        total_break_seconds = sessions.filter(is_break=True).aggregate(
+            total=Sum("actual_duration_seconds")
+        )["total"] or 0
+        
+        # Hourly aggregation
+        hourly_data = defaultdict(lambda: {"focus": 0, "break": 0})
         for s in sessions:
             hour = s.started_at.hour
             if WORK_START_HOUR <= hour <= WORK_END_HOUR:
-                buckets[hour] += s.actual_duration_seconds
-
+                key = "break" if s.is_break else "focus"
+                hourly_data[hour][key] += s.actual_duration_seconds
+                
         ## Chart data
-        # daily_flow = [
-        #     {
-        #         "time": hour,
-        #         "value": round(seconds / 60, 1)
-        #     }
-        #     for hour, seconds in sorted(buckets.items())
-        # ]
-        # daily_flow.append({'total_sessions': sessions.count()})
         daily_flow = []
         for hour in range(WORK_START_HOUR, WORK_END_HOUR + 1):
-            seconds = buckets.get(hour, 0)
+            focus_sec = hourly_data[hour]["focus"]
+            break_sec = hourly_data[hour]["break"]
+            total_sec = focus_sec + break_sec
+            productivity_score = round((focus_sec / total_sec * 100), 1) if total_sec > 0 else 0
+
             daily_flow.append({
                 "time": f"{hour:02d}:00",
-                "value": round(seconds / 60, 1)  # minutes
+                "focus": round(focus_sec / 60, 1),
+                "break": round(break_sec / 60, 1),
+                "productivity": productivity_score
             })
+        total_productivity = 0
+        for flow in daily_flow:
+            total_productivity += flow['productivity']
+        avg_daily_productivity = int(total_productivity / len(daily_flow))
         
         return {
             'date': date,
@@ -63,7 +70,7 @@ class AnalyticsService:
             'in_progress_tasks': in_progress_tasks,
             'total_focus_seconds': total_focus_seconds,
             'total_focus_hours': round(total_focus_seconds / 3600, 2),
-            'total_pomodoros': sessions.count(),
+            'avg_daily_productivity': avg_daily_productivity,
             'total_pomodoros': total_pomodoros,
             'daily_flow': daily_flow,   
         }

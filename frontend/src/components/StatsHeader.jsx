@@ -8,25 +8,24 @@ const formatDuration = (seconds = 0) => {
 };
 
 const StatsHeader = ({dailySummary}) => {
-    console.log(dailySummary)
     const stats = [
         {
             label: "Tasks Today",
             value: dailySummary?.total_tasks ?? 0,
-            subtext: `${dailySummary.completed_tasks} completed`,
+            subtext: `${dailySummary?.completed_tasks} completed`,
             icon: "✓",
             color: "bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300"
         },
         {
             label: "Time Focused",
-            value: formatDuration(dailySummary.total_focus_seconds),
+            value: formatDuration(dailySummary?.total_focus_seconds),
             subtext: "+25% from yesterday",
             icon: "⏱",
             color: "bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300"
         },
         {
             label: "Productivity",
-            value: "78%",
+            value: `${dailySummary?.avg_daily_productivity}%`,
             subtext: "Your best today",
             icon: "📈",
             color: "bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300"
