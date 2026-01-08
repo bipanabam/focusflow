@@ -43,6 +43,12 @@ export const logout = async () => {
     return response
 }
 
+export const getUserProfile = async () => {
+    const response = await API.get('/auth/profile');
+    console.log(response.data)
+    return response.data
+}
+
 // Task's Endpoints
 export const getTodaysTask = async (num, today) => {
     const response = await API.get(`/tasks/?page=${num}&created_at=${today}`);
