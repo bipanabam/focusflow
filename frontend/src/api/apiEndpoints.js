@@ -48,6 +48,7 @@ export const getUserProfile = async () => {
     return response.data
 }
 
+// Settings: Account
 export const updateUserProfile = async (data) => {
     const response = await API.patch('/auth/profile/', data);
     return response.data
@@ -62,6 +63,18 @@ export const changePassword = async (current_password, password, confirm_passwor
         }
     );
     return response.data
+}
+
+// Settings: Pomodoro
+export const getPomodoroSettings = async () => {
+    const response = await API.get('/auth/settings/pomodoro/');
+    return response.data;
+
+}
+
+export const updatePomodoroSettings = async (data) => {
+    const response = await API.patch('/auth/settings/pomodoro/', data);
+    return response.data;
 }
 
 // Task's Endpoints

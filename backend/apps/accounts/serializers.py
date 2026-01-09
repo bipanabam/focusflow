@@ -66,15 +66,64 @@ class UserSettingsSerializer(serializers.ModelSerializer):
         instance.save(update_fields=["password"])
         return instance
 
-class AccountSettingsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = [
-            "first_name",
-            "last_name",
-            "email",
-            "timezone",
-            "user_type",
-            "created_at",
-        ]
-        read_only_fields = fields
+class PomodoroSettingsSerializer(serializers.Serializer):
+    focus_minutes = serializers.IntegerField(min_value=10, max_value=120)
+    short_break_minutes = serializers.IntegerField(min_value=1, max_value=30)
+    long_break_minutes = serializers.IntegerField(min_value=5, max_value=60)
+    long_break_every = serializers.IntegerField(min_value=1, max_value=10)
+    auto_start_breaks = serializers.BooleanField()
+    auto_start_focus = serializers.BooleanField()
+
+    def update(self, instance, validated_data):
+        instance.pomodoro_settings = {
+            **instance.pomodoro_settings,
+            **validated_data
+        }
+        instance.save(update_fields=["pomodoro_settings"])
+        return instance
+    
+    def validate(self, data):
+        if not 10 <= data["focus_minutes"] <= 180:
+            raise serializers.ValidationError("Invalid focus duration")
+
+        if data["short_break_minutes"] > data["long_break_minutes"]:
+            raise serializers.ValidationError("Long break must be longer than short break")
+
+        return data
+
+
+class PomodoroSettingsSerializer(serializers.Serializer):
+    focus_minutes = serializers.IntegerField()
+    short_break_minutes = serializers.IntegerField()
+    long_break_minutes = serializers.IntegerField()
+    long_break_every = serializers.IntegerField()
+
+    def to_representation(self, instance):
+        settings = instance.pomodoro_settings or {}
+
+        return {
+            "focus_minutes": settings.get("focus_minutes", 25),
+            "short_break_minutes": settings.get("short_break_minutes", 5),
+            "long_break_minutes": settings.get("long_break_minutes", 15),
+            "long_break_every": settings.get("long_break_every", 4),
+        }
+
+    def validate(self, data):
+        if not 10 <= data["focus_minutes"] <= 180:
+            raise serializers.ValidationError("Focus duration must be 10-180 minutes")
+
+        if not 1 <= data["short_break_minutes"] <= 30:
+            raise serializers.ValidationError("Short break must be 1-30 minutes")
+
+        if data["long_break_minutes"] < data["short_break_minutes"]:
+            raise serializers.ValidationError("Long break must be longer than short break")
+
+        if not 2 <= data["long_break_every"] <= 10:
+            raise serializers.ValidationError("Sessions must be between 1 and 10")
+
+        return data
+
+    def update(self, instance, validated_data):
+        instance.pomodoro_settings = validated_data
+        instance.save(update_fields=["pomodoro_settings"])
+        return instance

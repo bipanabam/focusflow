@@ -4,11 +4,11 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework.response import Response
-from rest_framework import status, serializers
+from rest_framework import status, serializers, generics
 from apps.accounts.models import User
 
-from apps.accounts.serializers import UserSerializer, UserProfileSerializer, UserSettingsSerializer, AccountSettingsSerializer
-from rest_framework import generics
+from apps.accounts.serializers import UserSerializer, UserProfileSerializer, UserSettingsSerializer, PomodoroSettingsSerializer
+from apps.pomodoro.constants import DEFAULT_POMODORO_SETTINGS
 
 # Create your views here.
 class UserCreateView(generics.CreateAPIView):
@@ -161,9 +161,8 @@ class UserSettingsView(generics.UpdateAPIView):
         serializer.save()
 
         return Response({"success": True}, status=status.HTTP_200_OK)
-    
-class AccountSettingsView(generics.RetrieveAPIView):
-    serializer_class = AccountSettingsSerializer
+class PomodoroSettingsView(generics.RetrieveUpdateAPIView):
+    serializer_class = PomodoroSettingsSerializer
     permission_classes = [IsAuthenticated]
 
     def get_object(self):

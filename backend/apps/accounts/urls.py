@@ -8,6 +8,6 @@ urlpatterns = [
     path('logout/', views.logout, name='logout'),
     path('authenticated/', views.authenticated, name='authenticated'),
     path('profile/', views.UserProfileView.as_view(), name='user-profile'),
-    path("settings/account/", views.AccountSettingsView.as_view()),
     path('settings/password/', views.UserSettingsView.as_view(), name='change-password'),
+    path("settings/pomodoro/", views.PomodoroSettingsView.as_view()),
 ]
