@@ -65,3 +65,16 @@ class UserSettingsSerializer(serializers.ModelSerializer):
         instance.set_password(validated_data["password"])
         instance.save(update_fields=["password"])
         return instance
+
+class AccountSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            "first_name",
+            "last_name",
+            "email",
+            "timezone",
+            "user_type",
+            "created_at",
+        ]
+        read_only_fields = fields

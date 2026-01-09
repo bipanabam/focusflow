@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status, serializers
 from apps.accounts.models import User
 
-from apps.accounts.serializers import UserSerializer, UserProfileSerializer, UserSettingsSerializer
+from apps.accounts.serializers import UserSerializer, UserProfileSerializer, UserSettingsSerializer, AccountSettingsSerializer
 from rest_framework import generics
 
 # Create your views here.
@@ -161,3 +161,10 @@ class UserSettingsView(generics.UpdateAPIView):
         serializer.save()
 
         return Response({"success": True}, status=status.HTTP_200_OK)
+    
+class AccountSettingsView(generics.RetrieveAPIView):
+    serializer_class = AccountSettingsSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
