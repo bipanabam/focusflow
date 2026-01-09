@@ -6,7 +6,7 @@ import FormInput from "../../components/FormInput";
 import Spinner from "../../components/Spinner";
 import { getPomodoroSettings, updatePomodoroSettings } from "../../api/apiEndpoints";
 
-export const PRESETS = [
+const PRESETS = [
     {
         key: "classic",
         label: "Classic 25 / 5",

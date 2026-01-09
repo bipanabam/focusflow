@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
+from django.utils import timezone
+import pytz
 
 from apps.pomodoro.constants import DEFAULT_POMODORO_SETTINGS
 
@@ -41,7 +43,10 @@ class User(AbstractUser):
         ],
         default='individual'
     )
-    timezone = models.CharField(max_length=50, default='UTC')
+    timezone = models.CharField(
+    max_length=50,
+    choices=[(tz, tz) for tz in pytz.common_timezones],
+    default="UTC")
     created_at = models.DateTimeField(auto_now_add=True)
     pomodoro_settings = models.JSONField(default=dict, blank=True)
     
@@ -58,6 +63,12 @@ class User(AbstractUser):
     
     def get_focus_duration_minutes(self):
         return int(self.get_pomodoro_setting("focus_minutes"))
+    
+    def localtime(self, dt):
+        if not dt:
+            return None
+        user_tz = pytz.timezone(self.timezone)
+        return timezone.localtime(dt, user_tz)
     
     def __str__(self):
         return self.email

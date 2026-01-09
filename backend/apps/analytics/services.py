@@ -7,27 +7,27 @@ from datetime import timedelta
 
 from apps.tasks.models import Task
 from apps.pomodoro.models import PomodoroSession
+from apps.accounts.utils import TimezoneHandler
 
-WORK_START_HOUR = 9
+WORK_START_HOUR = 8
 WORK_END_HOUR = 22
 
 class AnalyticsService:
     @staticmethod
-    def get_daily_summary(user, date):
+    def get_daily_summary(user, date_str=None):
         """Get user's productivity summary for a specific date"""
-        tasks = Task.objects.filter(
-            owner=user,
-            created_at__date=date)
+        tz = TimezoneHandler(user)
+        user_date = tz.parse_date(date_str) 
+        
+        tasks = Task.objects.for_user_date(user, 'created_at', date_str)
+        
         pending_tasks = tasks.filter(status='pending').count()
         in_progress_tasks = tasks.filter(status='in_progress').count()
         completed_tasks = tasks.filter(status='completed').count()
         
-        sessions = PomodoroSession.objects.filter(
-            user=user,
-            started_at__date=date,
-            # is_break=False,
-            completed=True
-        )
+        sessions = PomodoroSession.objects.for_user_date(
+            user, 'started_at', date_str
+        ).filter(completed=True)
         total_pomodoros = sessions.filter(is_break=False).count()
         
         total_focus_seconds = sessions.filter(is_break=False).aggregate(
@@ -35,13 +35,13 @@ class AnalyticsService:
         )["total"] or 0
         
         # Comparison with yesterday's focus time
-        yesterday = date - timedelta(days=1)
-        yesterday_sessions = PomodoroSession.objects.filter( 
-            user=user,
-            started_at__date=yesterday,
-            is_break=False,
-            completed=True
-        )
+        yesterday = user_date - timedelta(days=1)
+        yesterday_str = yesterday.date().isoformat()
+        
+        yesterday_sessions = PomodoroSession.objects.for_user_date(
+            user, 'started_at', yesterday_str
+        ).filter(is_break=False, completed=True)
+        
         yesterdays_focus_seconds = yesterday_sessions.aggregate(
             total=Sum("actual_duration_seconds")
         )["total"] or 0
@@ -67,7 +67,7 @@ class AnalyticsService:
         # Hourly aggregation
         hourly_data = defaultdict(lambda: {"focus": 0, "break": 0})
         for s in sessions:
-            hour = s.started_at.hour
+            hour = tz.to_user_timezone(s.started_at).hour
             if WORK_START_HOUR <= hour <= WORK_END_HOUR:
                 key = "break" if s.is_break else "focus"
                 hourly_data[hour][key] += s.actual_duration_seconds
@@ -90,9 +90,12 @@ class AnalyticsService:
         for flow in daily_flow:
             total_productivity += flow['productivity']
         avg_daily_productivity = int(total_productivity / len(daily_flow))
+        print("Active TZ:", timezone.get_current_timezone_name())
+        print("Now:", timezone.now())
+
         
         return {
-            'date': date,
+            'date': user_date.date().isoformat(),
             'total_tasks': tasks.count(),
             'completed_tasks': completed_tasks,
             'pending_tasks': pending_tasks,

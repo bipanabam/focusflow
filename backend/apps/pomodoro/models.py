@@ -5,12 +5,14 @@ from datetime import timedelta
 from apps.tasks.models import Task
 from apps.accounts.models import User
 
+from apps.accounts.managers import UserTimezoneManager
+
 # Create your models here.
 class PomodoroSession(models.Model):
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='pomodoro_sessions', null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     
-    started_at = models.DateTimeField()
+    started_at = models.DateTimeField(default=timezone.now)
     ended_at = models.DateTimeField(null=True, blank=True)
     
     paused_at = models.DateTimeField(null=True, blank=True)
@@ -26,6 +28,8 @@ class PomodoroSession(models.Model):
     completed = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    objects = UserTimezoneManager()
     
     class Meta:
         constraints = [

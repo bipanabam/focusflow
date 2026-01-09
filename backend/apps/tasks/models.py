@@ -1,6 +1,8 @@
 from django.db import models
 from apps.accounts.models import User
 
+from apps.accounts.managers import UserTimezoneManager
+
 # Create your models here.
 class Task(models.Model):
     STATUS_CHOICES = [
@@ -44,6 +46,8 @@ class Task(models.Model):
     started_at = models.DateTimeField(null=True, blank=True)
     ended_at = models.DateTimeField(null=True, blank=True)
     total_focus_seconds = models.IntegerField(default=0)
+    
+    objects = UserTimezoneManager()
     
     class Meta:
         db_table = 'tasks'
