@@ -63,6 +63,14 @@ const Navbar = () => {
                 {/* Right Side - Actions */}
                 {auth && (
                     <div className='flex items-center gap-4'>
+                        {/* Dashboard/Home */}
+                        <button
+                            onClick={() => navigate('/')}
+                            className='p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition'
+                            title='Dashboard'
+                        >
+                            <FaHouse size='22px' />
+                        </button>
                         {/* Add Task */}
                         <button
                             onClick={() => navigate('/tasks/create')}

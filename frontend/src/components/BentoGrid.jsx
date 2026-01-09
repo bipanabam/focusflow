@@ -3,16 +3,13 @@ import CurrentTaskTimer from "./CurrentTaskTimer";
 import NextUpTasks from "./tasks/NextUpTasks";
 import DailyFlow from "./DailyFlow";
 import StreaksAndBadges from "./StreaksAndBadges";
-import TaskCard from "./tasks/TaskCard";
 import PreviousTasks from "./tasks/PreviousTasks";
 import StatsHeader from "./StatsHeader";
 import FocusMode from "./FocusMode";
 import WeeklyOverview from "./WeeklyOverview";
-import QuickActions from "./QuickActions";
 import Spinner from "./Spinner";
 
 import { getTodaysUncompletedTask, getActiveSession, getTask, getDailySummary, getStreaks } from "../api/apiEndpoints";
-import { data } from 'react-router-dom';
 
 const ACTIVE_STATES = [
     "FOCUS_RUNNING",
@@ -165,43 +162,11 @@ const BentoGrid = () => {
                     </div>
                 </section>
 
-                {/* Section 4: Quick Actions & Tasks */}
-                {/* <section className="mb-12">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Actions & Tasks</h2>
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                        <QuickActions />
-                        <div className="lg:col-span-3">
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="font-semibold text-lg text-gray-900 dark:text-white">Today's Tasks</h3>
-                                    <div className="flex flex-row gap-6">
-                                        {currentPage > 1 && !loading && (
-                                            <button onClick={loadPreviousTasks}  className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition">
-                                                ← Previous
-                                            </button>
-                                        )}
-                                        {nextPage && !loading && (
-                                            <button onClick={loadMoreTasks}  className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition">
-                                                Load More →
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                    {paginatedTasks.map((task) => (
-                                        <TaskCard key={task.id} task={task} />
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section> */}
-
-                {/* Section 5: Task History */}
-                {/* <section className="mb-12">
+                {/* Section 4: Task History */}
+                <section className="mb-12">
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Work History</h2>
-                    <PreviousTasks tasks={pinnedTasks} />
-                </section> */}
+                    <PreviousTasks />
+                </section>
             </div>
         </div>
     );
