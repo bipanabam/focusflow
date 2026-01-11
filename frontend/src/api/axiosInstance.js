@@ -30,15 +30,26 @@ API.interceptors.response.use(
 
         // Prevent infinite loops - skip retry for refresh endpoint, network errors, and already retried requests
         if (
-            originalRequest.url?.includes('/auth/token/refresh/') ||
             !error.response ||
-            originalRequest._retry
+            originalRequest._retry ||
+            originalRequest.url.includes('/auth/token/refresh/') ||
+            originalRequest.url.includes('/auth/login/') ||
+            originalRequest.url.includes('/auth/register/')
         ) {
             return Promise.reject(error);
         }
 
         // Handle 401 Unauthorized errors
         if (error.response?.status === 401) {
+            const hasRefresh = document.cookie
+                .split(';')
+                .some(c => c.trim().startsWith('refresh_token='));
+
+            if (!hasRefresh) {
+                // User is NOT logged in → don't refresh → don't logout
+                return Promise.reject(error);
+            }
+
             if (isRefreshing) {
                 // If already refreshing, queue this request to retry after refresh completes
                 return new Promise((resolve, reject) => {

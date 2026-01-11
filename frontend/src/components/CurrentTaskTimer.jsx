@@ -332,7 +332,7 @@ const CurrentTaskTimer = ({ task, session, onSessionEnded }) => {
 
                 {/* Task Info */}
                 <div className="text-center">
-                    <h3 className="text-xl font-bold truncate">{task?.title || "No Active Task"}</h3>
+                    <h3 className="text-xl font-bold line-clamp-1 cursor-pointer" title={task?.title}>{task?.title || "No Active Task"}</h3>
                     <span className="text-xs uppercase text-gray-400">{task?.category || "Idle"}</span>
                 </div>
 
