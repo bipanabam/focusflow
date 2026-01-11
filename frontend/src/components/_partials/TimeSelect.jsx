@@ -1,11 +1,10 @@
 const getOffset = (tz) =>
-    new Intl.DateTimeFormat("en-US", {
+    new Date().toLocaleString("en-US", {
         timeZone: tz,
-        timeZoneName: "short"
-    }).formatToParts(new Date())
-        .find(p => p.type === "timeZoneName")?.value;
-const TimezoneSelect = ({ value, onChange }) => {
-    const timezones = Intl.supportedValuesOf("timeZone");
+        timeZoneName: "shortOffset"
+    }).split(" ").pop();
+
+const TimezoneSelect = ({ value, onChange, timezones }) => {
 
     return (
         <div className="w-full flex flex-col gap-1">

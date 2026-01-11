@@ -2,8 +2,10 @@
 import axios from 'axios';
 import { refresh_token } from './apiEndpoints';
 
+const API_URL = import.meta.env.VITE_API_URL
+
 const API = axios.create({
-    baseURL: "http://localhost:8000/",
+    baseURL: API_URL,
     withCredentials: true, // send cookies automatically
     timeout: 10000, // 10 second timeout
 });
@@ -41,14 +43,14 @@ API.interceptors.response.use(
 
         // Handle 401 Unauthorized errors
         if (error.response?.status === 401) {
-            const hasRefresh = document.cookie
-                .split(';')
-                .some(c => c.trim().startsWith('refresh_token='));
+            // const hasRefresh = document.cookie
+            //     .split(';')
+            //     .some(c => c.trim().startsWith('refresh_token='));
 
-            if (!hasRefresh) {
-                // User is NOT logged in → don't refresh → don't logout
-                return Promise.reject(error);
-            }
+            // if (!hasRefresh) {
+            //     // User is NOT logged in → don't refresh → don't logout
+            //     return Promise.reject(error);
+            // }
 
             if (isRefreshing) {
                 // If already refreshing, queue this request to retry after refresh completes

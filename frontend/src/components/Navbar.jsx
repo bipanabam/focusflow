@@ -1,11 +1,13 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import toast from 'react-hot-toast';
 import { IoMdAddCircleOutline, IoMdSettings } from 'react-icons/io';
 import { IoPersonOutline, IoSearch, IoNotifications } from 'react-icons/io5';
 import { GoTasklist } from "react-icons/go";
 import { FaHouse } from 'react-icons/fa6';
 import { MdLogout } from 'react-icons/md';
+import logo from "../assets/focusflow.svg";
 
 const Navbar = () => {
     const [searchOpen, setSearchOpen] = useState(false);
@@ -14,9 +16,14 @@ const Navbar = () => {
     const [showNotifications, setShowNotifications] = useState(false);
     const { auth, user, authLogout } = useAuth();
     const navigate = useNavigate();
-
+    
     const handleLogout = async () => {
-        await authLogout();
+        try {
+            await authLogout();  
+            toast.success("Logged out successfully!");
+        } catch (err) {
+            toast.error("Logout failed. Please try again.");
+        }
     };
 
     return (
@@ -27,12 +34,13 @@ const Navbar = () => {
                     onClick={() => navigate('/')}
                     className='flex items-center gap-2 cursor-pointer group'
                 >
-                    <div className='w-8 h-8 bg-linear-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold'>
-                        F
-                    </div>
-                    <h1 className='text-xl font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition'>
+                    {/* <div className='w-8 h-8 bg-linear-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold'>
+            -1h-14-w-14
+                    </div> */}
+                    {/* <h1 className='text-xl font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition'>
                         FocusFlow
-                    </h1>
+                    </h1> */}
+                    <img src={logo} alt='Logo' className='w-56'/>
                 </div>
 
                 {/* Center - Search Bar */}

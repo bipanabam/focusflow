@@ -3,6 +3,7 @@ import API from "../api/axiosInstance";
 import { useAuth } from "./AuthContext";
 
 const PomodoroSocketContext = createContext(null);
+const WEBSOCKET_URL = import.meta.env.VITE_WEBSOCKET_URL
 
 export function PomodoroSocketProvider({ children }) {
     const { auth } = useAuth();
@@ -21,7 +22,7 @@ export function PomodoroSocketProvider({ children }) {
             }
             return;
         }
-        socketRef.current = new WebSocket("ws://localhost:8000/ws/pomodoro/");
+        socketRef.current = new WebSocket(WEBSOCKET_URL);
 
         socketRef.current.onopen = () => {
             console.log("Pomodoro WS connected");

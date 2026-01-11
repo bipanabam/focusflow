@@ -1,4 +1,5 @@
 import { useState } from "react";
+import toast from "react-hot-toast";
 import AuthCard from "../components/AuthCard"
 import FormInput from "../components/FormInput";
 import Spinner from "../components/Spinner";
@@ -19,7 +20,21 @@ export const Login = () => {
     const handleNav = () => navigate("/register");
 
     const handleLogin = async () => {
-        authLogin(form.email, form.password)
+        setLoading(true);
+        setError("");
+        try {
+            const result = await authLogin(form.email, form.password);
+            if (!result.success) {
+                toast.error(result.message);
+                setError(result.message);
+            } else {
+                toast.success("Logged in successfully!")
+            }
+        } catch (err) {
+            toast.error("Something went wrong. Please try again.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (

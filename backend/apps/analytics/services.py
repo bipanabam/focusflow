@@ -90,9 +90,6 @@ class AnalyticsService:
         for flow in daily_flow:
             total_productivity += flow['productivity']
         avg_daily_productivity = int(total_productivity / len(daily_flow))
-        print("Active TZ:", timezone.get_current_timezone_name())
-        print("Now:", timezone.now())
-
         
         return {
             'date': user_date.date().isoformat(),

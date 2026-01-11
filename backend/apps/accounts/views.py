@@ -137,6 +137,11 @@ def authenticated(request):
                         "pomodoro_settings": user.pomodoro_settings,
                     }
                 })
+    
+import pytz
+@api_view(["GET"])
+def timezone_list(request):
+    return Response(pytz.common_timezones)
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserProfileSerializer
@@ -144,6 +149,11 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+    
+    def update(self, request, *args, **kwargs):
+        print(request.data)
+        return super().update(request, *args, **kwargs)
+
     
 class UserSettingsView(generics.UpdateAPIView):
     serializer_class = UserSettingsSerializer

@@ -48,6 +48,11 @@ export const getUserProfile = async () => {
     return response.data
 }
 
+export const getTimezones = async () => {
+    const response = await API.get('/auth/timezones/');
+    return response.data;
+}
+
 // Settings: Account
 export const updateUserProfile = async (data) => {
     const response = await API.patch('/auth/profile/', data);

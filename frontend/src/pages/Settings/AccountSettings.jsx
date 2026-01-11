@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { FiUser, FiMail, FiClock, FiLock } from "react-icons/fi";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import API from "../../api/axiosInstance";
 
 import Breadcrumbs from "../../components/_partials/Breadcrumbs";
 import FormInput from "../../components/FormInput";
@@ -28,6 +29,11 @@ const AccountSettings = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const navigate = useNavigate()
+    const [timezones, setTimezones] = useState([]);
+
+    useEffect(() => {
+        API.get("/auth/timezones/").then(res => setTimezones(res.data));
+    }, []);
 
     useEffect(() => {
         loadProfile();
@@ -45,12 +51,15 @@ const AccountSettings = () => {
         setLoading(false);
     };
 
-    const handleSave = async () => {
+    const handleSave = async (e) => {
+        e.preventDefault();
         try{
             setSaving(true);
-            await updateUserProfile(form);
-            toast.success("Account updated successfully");
+            const updatedUser = await updateUserProfile(form);
+            setUser(updatedUser);
+            setForm(updatedUser); 
             setIsEditing(false);
+            toast.success("Account updated successfully");
         } catch {
             toast.error("Failed to update account");
         } finally {
@@ -125,6 +134,7 @@ const AccountSettings = () => {
                         />
                         <TimezoneSelect
                             value={form.timezone}
+                            timezones={timezones}
                             onChange={e => setForm({ ...form, timezone: e.target.value })}
                         />
 

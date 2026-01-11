@@ -14,29 +14,29 @@ export const AuthProvider = ({ children }) => {
 
     // Check authentication status
     const checkAuth = useCallback(async () => {
-        // Prevent multiple simultaneous calls
         if (checkAuthCalled.current) return;
-        checkAuthCalled.current = true;
 
+        checkAuthCalled.current = true;
         try {
             const data = await authenticated();
             setUser(data.user);
             setAuth(true);
         } catch {
             setAuth(false);
+            setUser(null);
         } finally {
             setAuthLoading(false);
             checkAuthCalled.current = false;
         }
     }, []);
 
+
     // Login
     const authLogin = useCallback(async (email, password) => {
         try {
             const data = await apiLogin(email, password);
             if (data.success) {
-                setAuth(true);
-                setUser(data.user);
+                await checkAuth();
                 navigate('/');
                 return { success: true };
             }

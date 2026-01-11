@@ -10,4 +10,5 @@ urlpatterns = [
     path('profile/', views.UserProfileView.as_view(), name='user-profile'),
     path('settings/password/', views.UserSettingsView.as_view(), name='change-password'),
     path("settings/pomodoro/", views.PomodoroSettingsView.as_view()),
+    path("timezones/", views.timezone_list),
 ]
