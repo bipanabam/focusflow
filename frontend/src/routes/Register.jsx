@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 import AuthCard from "../components/AuthCard";
 import FormInput from "../components/FormInput";
 import PasswordStrength from "../components/PasswordStrength";
@@ -40,11 +41,12 @@ const Register = () => {
                 form.lastName,
                 form.password
             );
-            alert('Account Successfully registered.')
+            toast.success('Account Successfully registered.')
+            toast.success('Login to your account')
             navigate('/login')
         } catch (error) {
             console.log("Register data:", form);
-            alert('Registration failed. Please try again.')
+            toast.error('Registration failed. Please try again.')
         } finally {
             setLoading(false);
         }
