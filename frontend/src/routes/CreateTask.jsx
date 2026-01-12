@@ -51,7 +51,7 @@ const CreateTask = () => {
     }
 
     return (
-        <div className="min-h-[calc(100vh-90px)] flex items-center justify-center">
+        <div className="min-h-[calc(100vh-90px)] flex items-center justify-center py-10">
             <Card title="Create Task">
                 <div className="flex flex-col gap-3">
                     <form

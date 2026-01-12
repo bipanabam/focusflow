@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { IoMdAddCircleOutline, IoMdSettings } from 'react-icons/io';
-import { IoPersonOutline, IoSearch, IoNotifications } from 'react-icons/io5';
+import { IoPersonOutline, IoSearch, IoNotifications, IoLogIn } from 'react-icons/io5';
+import { RiLoginBoxLine } from "react-icons/ri";
 import { GoTasklist } from "react-icons/go";
 import { FaHouse } from 'react-icons/fa6';
 import { MdLogout } from 'react-icons/md';
@@ -27,7 +28,7 @@ const Navbar = () => {
     };
 
     return (
-        <nav className='sticky top-0 z-50 w-full bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-md'>
+        <nav className='fixed top-0 z-50 w-full bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-md'>
             <div className='max-w-7xl mx-auto px-4 h-20 flex items-center justify-between'>
                 {/* Logo & Brand */}
                 <div 
@@ -206,6 +207,54 @@ const Navbar = () => {
                                 </div>
                             )}
                         </div>
+                    </div>
+                )}
+                {!auth && (
+                    <div className="relative">
+                        {/* Trigger button */}
+                        <button
+                            onMouseEnter={() => setShowUserMenu(true)}
+                            className="flex items-center gap-2 px-3 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                            title="Account"
+                        >
+                            {/* Generic user icon */}
+                            <div className="w-8 h-8 bg-gray-400 dark:bg-gray-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                A
+                            </div>
+                            <span className="hidden sm:block text-sm font-medium text-gray-900 dark:text-white">
+                                Account
+                            </span>
+                        </button>
+
+                        {/* Dropdown menu */}
+                        {showUserMenu && (
+                            <div
+                                className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-700 rounded-lg shadow-xl border border-gray-200 dark:border-gray-600"
+                                onMouseLeave={() => setShowUserMenu(false)}
+                            >
+                                <button
+                                    onClick={() => {
+                                        navigate('/login');
+                                        setShowUserMenu(false);
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2 transition"
+                                >
+                                    <RiLoginBoxLine size="18px" />
+                                    Login
+                                </button>
+
+                                <button
+                                    onClick={() => {
+                                        navigate('/register');
+                                        setShowUserMenu(false);
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2 transition"
+                                >
+                                    <IoMdAddCircleOutline size="18px" />
+                                    Register
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

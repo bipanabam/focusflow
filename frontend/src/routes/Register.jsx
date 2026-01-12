@@ -57,7 +57,7 @@ const Register = () => {
     }
 
     return (
-        <div className="min-h-[calc(100vh-90px)] flex items-center justify-center">
+        <div className="min-h-[calc(100vh-90px)] flex items-center justify-center py-10">
             <AuthCard
                 title="Create Account"
                 footer={
