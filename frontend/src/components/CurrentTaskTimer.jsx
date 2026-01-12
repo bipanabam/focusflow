@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import toast from "react-hot-toast";
 import { usePomodoroSocket } from "../hooks/usePomodoroSocket";
 import { IoPlayOutline, IoPauseCircle, IoStopCircle } from "react-icons/io5";
 import { useAuth } from "../contexts/AuthContext";
@@ -203,16 +204,19 @@ const CurrentTaskTimer = ({ task, session, onSessionEnded }) => {
             switch (sessionState) {
                 case FSM.IDLE:
                     await startTask(task.id);
+                    toast.success('Pomodoro Session for given task is started.')
                     break;
 
                 case FSM.FOCUS_RUNNING:
                 case FSM.BREAK_RUNNING:
                     await pauseTask(task.id);
+                    toast.success('Task is paused for now...')
                     break;
 
                 case FSM.FOCUS_PAUSED:
                 case FSM.BREAK_PAUSED:
                     await resumeTask(task.id);
+                    toast.success('Task is resumed successfully.')
                     break;
 
                 default:
@@ -229,6 +233,7 @@ const CurrentTaskTimer = ({ task, session, onSessionEnded }) => {
         try {
             setPending(true);
             await completeTask(task.id);
+            toast.success('Task set as completed successfully.')
         } finally {
             setPending(false);
         }
