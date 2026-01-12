@@ -1,0 +1,39 @@
+stateDiagram-v2
+    [*] --> Pending: Task Created
+    
+    Pending --> InProgress: Start Task
+    Pending --> Deleted: Delete Task
+    
+    InProgress --> Paused: Pause Task
+    InProgress --> Completed: Complete Task
+    InProgress --> Deleted: Delete Task
+    
+    Paused --> InProgress: Resume Task
+    Paused --> Completed: Complete Task
+    Paused --> Deleted: Delete Task
+    
+    Completed --> [*]: Task Finished
+    Deleted --> [*]: Task Removed
+    
+    note right of Pending
+        No timing data
+        Estimated pomodoros set
+    end note
+    
+    note right of InProgress
+        started_at timestamp set
+        Active PomodoroSession created
+        Timer running
+    end note
+    
+    note right of Paused
+        Active session paused
+        Can resume multiple times
+        Time accumulates
+    end note
+    
+    note right of Completed
+        ended_at timestamp set
+        Total focus time calculated
+        All sessions completed
+    end note

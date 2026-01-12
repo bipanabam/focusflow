@@ -1,0 +1,56 @@
+### Register User
+POST http://localhost:8000/auth/register/
+Content-Type: application/json
+
+{
+    "first_name": "New",
+    "last_name": "User",
+    "email": "newuser1@example.com",
+    "password": "securepassword123"
+}
+
+### Login User
+POST http://localhost:8000/auth/login/
+Content-Type: application/json
+
+{
+    "email": "newuser@example.com",
+    "password": "securepassword123"
+}
+
+### Refresh Token
+POST http://localhost:8000/auth/token/refresh/
+Content-Type: application/json
+
+{
+    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc2Njk5OTA5NiwiaWF0IjoxNzY2OTEyNjk2LCJqdGkiOiI4YzkwOTA5Mzk3MWM0YTMxOWJjODFkYzRmZDQxMGMwNiIsInVzZXJfaWQiOiIzIn0.2RSFwuamNYSN48DXtATVpSp8ABir7Ewkk3liCfslTC8"
+}
+
+### Logout User
+POST http://localhost:8000/auth/logout/
+
+### Get User Profile
+GET http://localhost:8000/auth/profile/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2OTE5NTY3LCJpYXQiOjE3NjY5MTkyNjcsImp0aSI6IjAxMTNiMTljZTRhZTQyOGM5NzYzYTA0YWE4YmZjNTFhIiwidXNlcl9pZCI6IjIifQ.wBdbuY3O59EbkA_uD8sn0dvVF4osQ6uHnrD553ZpwxY
+
+### Update User Profile
+PUT http://localhost:8000/auth/profile/
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2OTE5NTY3LCJpYXQiOjE3NjY5MTkyNjcsImp0aSI6IjAxMTNiMTljZTRhZTQyOGM5NzYzYTA0YWE4YmZjNTFhIiwidXNlcl9pZCI6IjIifQ.wBdbuY3O59EbkA_uD8sn0dvVF4osQ6uHnrD553ZpwxY
+
+{
+    "first_name": "Updated",
+    "last_name": "User",
+    "timezone": "America/New_York"
+}
+
+### Change User Password
+PUT http://localhost:8000/auth/change-password/
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2OTE5NTY3LCJpYXQiOjE3NjY5MTkyNjcsImp0aSI6IjAxMTNiMTljZTRhZTQyOGM5NzYzYTA0YWE4YmZjNTFhIiwidXNlcl9pZCI6IjIifQ.wBdbuY3O59EbkA_uD8sn0dvVF4osQ6uHnrD553ZpwxY
+
+{
+    "current_password": "securepassword123",
+    "password": "newsecurepassword456",
+    "confirm_password": "newsecurepassword456"
+}

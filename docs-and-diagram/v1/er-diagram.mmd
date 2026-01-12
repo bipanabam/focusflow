@@ -1,0 +1,64 @@
+erDiagram
+    User ||--o{ Task : creates
+    User ||--o{ PomodoroSession : performs
+    User ||--o{ Project : owns
+    Task ||--o{ PomodoroSession : contains
+    Task }o--|| Project : "belongs to"
+    
+    User {
+        int id PK
+        string email UK
+        string username UK
+        string password_hash
+        string first_name
+        string last_name
+        string user_type "default: individual"
+        int organization_id FK "nullable for V1"
+        string timezone "default: UTC"
+        json pomodoro_settings
+        datetime created_at
+        datetime last_login
+        boolean is_active
+    }
+    
+    Project {
+        int id PK
+        string name
+        string description
+        string color_code
+        int owner_id FK
+        int organization_id FK "nullable for V1"
+        boolean is_active
+        datetime created_at
+    }
+    
+    Task {
+        int id PK
+        string title
+        text description
+        int owner_id FK
+        int organization_id FK "nullable for V1"
+        int project_id FK "nullable"
+        int assigned_to_id FK "nullable, V2 only"
+        int estimated_pomodoros "nullable"
+        string priority "V2: low/medium/high"
+        string status "pending/in_progress/paused/completed"
+        datetime created_at
+        datetime started_at "nullable"
+        datetime ended_at "nullable"
+        int total_focus_seconds "calculated"
+    }
+    
+    PomodoroSession {
+        int id PK
+        int task_id FK
+        int user_id FK
+        datetime started_at
+        datetime ended_at "nullable"
+        int duration_minutes "default: 25"
+        int actual_duration_seconds "nullable"
+        boolean is_break "default: false"
+        string break_type "short/long, nullable"
+        boolean completed "default: false"
+        datetime created_at
+    }

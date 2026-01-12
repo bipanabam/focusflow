@@ -1,0 +1,50 @@
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant API
+    participant TaskService
+    participant PomodoroService
+    participant Database
+    participant WebSocket
+    
+    User->>Frontend: Click "Start Task"
+    Frontend->>API: POST /api/v1/tasks/{id}/start/
+    API->>TaskService: start_task(task_id, user)
+    
+    TaskService->>Database: Update task status to "in_progress"
+    TaskService->>Database: Set task.started_at = now()
+    
+    TaskService->>PomodoroService: start_session(task, user)
+    PomodoroService->>Database: Create PomodoroSession
+    PomodoroService->>Database: Set started_at = now()
+    
+    Database-->>PomodoroService: Session created
+    PomodoroService-->>TaskService: Session data
+    TaskService-->>API: Task + Session data
+    
+    API->>WebSocket: Broadcast "task_started" event
+    WebSocket-->>Frontend: Real-time notification
+    
+    API-->>Frontend: 200 OK (task + session)
+    Frontend->>Frontend: Start local timer
+    Frontend-->>User: Show floating timer widget
+    
+    Note over Frontend,User: Timer runs locally for 25 minutes
+    
+    User->>Frontend: Timer completes / Click "End Task"
+    Frontend->>API: POST /api/v1/tasks/{id}/complete/
+    API->>TaskService: complete_task(task_id, user)
+    
+    TaskService->>PomodoroService: complete_active_session(user)
+    PomodoroService->>Database: Update session.ended_at = now()
+    PomodoroService->>Database: Calculate actual_duration
+    PomodoroService->>Database: Set completed = true
+    
+    TaskService->>Database: Update task.ended_at = now()
+    TaskService->>Database: Set status = "completed"
+    TaskService->>Database: Calculate total_focus_seconds
+    
+    Database-->>API: Updated task
+    API->>WebSocket: Broadcast "task_completed" event
+    API-->>Frontend: 200 OK
+    Frontend-->>User: Show completion notification
