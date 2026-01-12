@@ -1,12 +1,16 @@
 from django.conf import settings
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+
 from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework.response import Response
 from rest_framework import status, serializers, generics
-from apps.accounts.models import User
+from rest_framework_simplejwt.tokens import RefreshToken
 
+from apps.accounts.models import User
 from apps.accounts.serializers import UserSerializer, UserProfileSerializer, UserSettingsSerializer, PomodoroSettingsSerializer
 from apps.pomodoro.constants import DEFAULT_POMODORO_SETTINGS
 
@@ -177,3 +181,70 @@ class PomodoroSettingsView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def google_login(request):
+    token = request.data.get("credential")
+
+    if not token:
+        return Response({"success": False}, status=400)
+
+    try:
+        idinfo = id_token.verify_oauth2_token(
+            token,
+            google_requests.Request(),
+            settings.GOOGLE_CLIENT_ID,
+        )
+
+        email = idinfo["email"]
+        first_name = idinfo.get("given_name", "")
+        last_name = idinfo.get("family_name", "")
+
+        user, created = User.objects.get_or_create(
+            email=email,
+            defaults={
+                "first_name": first_name,
+                "last_name": last_name,
+            },
+        )
+
+        refresh = RefreshToken.for_user(user)
+
+        res = Response(
+            {
+                "success": True,
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "pomodoro_settings": user.pomodoro_settings,
+                },
+            },
+            status=200,
+        )
+
+        # Cookies (same as your login)
+        res.set_cookie(
+            "access_token",
+            str(refresh.access_token),
+            max_age=settings.AUTH_COOKIE_ACCESS_MAX_AGE,
+            httponly=True,
+            secure=settings.AUTH_COOKIE_SECURE,
+            samesite=settings.AUTH_COOKIE_SAMESITE,
+        )
+
+        res.set_cookie(
+            "refresh_token",
+            str(refresh),
+            max_age=settings.AUTH_COOKIE_REFRESH_MAX_AGE,
+            httponly=True,
+            secure=settings.AUTH_COOKIE_SECURE,
+            samesite=settings.AUTH_COOKIE_SAMESITE,
+        )
+
+        return res
+
+    except Exception as e:
+        return Response({"success": False}, status=401)

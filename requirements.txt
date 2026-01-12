@@ -12,3 +12,5 @@ pytz
 whitenoise==6.11.0
 psycopg2-binary==2.9.11
 gunicorn
+google-auth==2.47.0
+requests==2.32.5

@@ -4,6 +4,7 @@ from apps.accounts import views
 urlpatterns = [
     path('register/', views.UserCreateView.as_view(), name='user-register'),
     path('login/', views.CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path("google/", views.google_login, name='google_login'),
     path('token/refresh/', views.CustomTokenRefreshView.as_view(), name='token_refresh'),
     path('logout/', views.logout, name='logout'),
     path('authenticated/', views.authenticated, name='authenticated'),

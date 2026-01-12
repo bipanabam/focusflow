@@ -5,6 +5,7 @@ import FormInput from "../components/FormInput";
 import Spinner from "../components/Spinner";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import GoogleAuthButton from "../components/GoogleAuthButton";
 
 export const Login = () => {
     const [form, setForm] = useState({ email: "", password: "" });
@@ -82,6 +83,7 @@ export const Login = () => {
                             {loading ? "Logging in..." : "Login"}
                         </button>
                     </form>
+                    <GoogleAuthButton text="signin_with" />
                 </div>
             </AuthCard>
         </div>

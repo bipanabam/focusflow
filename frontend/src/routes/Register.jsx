@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
+import { useNavigate } from 'react-router-dom';
 import AuthCard from "../components/AuthCard";
 import FormInput from "../components/FormInput";
 import PasswordStrength from "../components/PasswordStrength";
 import Spinner from "../components/Spinner";
 import PasswordRulesTooltip from "../components/PasswordRulesTooltip";
-import { useNavigate } from 'react-router-dom';
+import GoogleAuthButton from "../components/GoogleAuthButton";
 
 import { registerUser } from "../api/apiEndpoints";
 
@@ -153,6 +154,7 @@ const Register = () => {
                         </button>
 
                     </form>
+                    <GoogleAuthButton text="signup_with" />
                 </div>
             </AuthCard>
         </div>
