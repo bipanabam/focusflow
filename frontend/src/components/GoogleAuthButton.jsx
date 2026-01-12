@@ -23,11 +23,14 @@ const GoogleAuthButton = ({ text }) => {
     };
 
     return (
-        <GoogleLogin
-            onSuccess={handleSuccess}
-            onError={() => toast.error('Google login failed')}
-            text={text}
-        />
+        <div className="w-full flex justify-center">
+            <GoogleLogin
+                onSuccess={handleSuccess}
+                onError={() => toast.error('Google login failed')}
+                text={text}
+                width={330}
+            />
+        </div>
     );
 };
 
